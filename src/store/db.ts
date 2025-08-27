@@ -83,12 +83,14 @@ export type QAResult = {
 
 export type Exception = {
   id: string;
-  type: 'InventoryShort' | 'ShippingMisscan' | 'QAFail' | 'ModelChange' | 'Other';
+  type: 'InventoryShort' | 'ShippingMisscan' | 'QAFail' | 'ModelChange' | 'EquipmentDown' | 'Other';
   ref: string; // hangerId, packageId, shipmentId, etc.
   description: string;
   severity: 'Low' | 'Med' | 'High' | 'Critical';
   assignedTo?: string;
+  resolvedBy?: string;
   state: 'Open' | 'InProgress' | 'Resolved' | 'Closed';
+  resolutionNotes?: string;
   createdAt: string;
   resolvedAt?: string;
 };
@@ -277,6 +279,7 @@ type DB = {
   approveFieldOrder: (id: string) => void;
   recordQAResult: (hangerId: string, type: 'ShopQA' | 'FieldQA', result: 'Pass' | 'Fail' | 'Rework', data: Partial<QAResult>) => string;
   createException: (type: Exception['type'], ref: string, description: string, severity: Exception['severity']) => string;
+  updateException: (id: string, updates: Partial<Exception>) => void;
   resolveException: (id: string) => void;
   
   // Scheduler Actions
@@ -761,6 +764,14 @@ export const useDB = create<DB>()(
         set({ exceptions: [...get().exceptions, exception] });
         get().log({ user: 'system', action: `CreateException:${type}:${ref}`, before: null, after: exception });
         return id;
+      },
+
+      updateException: (id, updates) => {
+        const exception = get().exceptions.find(e => e.id === id);
+        if (!exception) return;
+        const updated = { ...exception, ...updates };
+        set({ exceptions: get().exceptions.map(e => e.id === id ? updated : e) });
+        get().log({ user: 'system', action: `UpdateException:${id}`, before: exception, after: updated });
       },
 
       resolveException: (id) => {

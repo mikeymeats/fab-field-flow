@@ -75,5 +75,12 @@ export async function bootstrapOnce() {
   s.recomputeInventory();
   s.ensureTeamSeeds();
   
+  // Seed some exceptions for testing
+  s.createException('QAFail', 'PKG-001', 'Torque values below specification on 3 hangers', 'High');
+  s.createException('InventoryShort', 'PKG-011', 'Insufficient 3/8" threaded rod for emergency package', 'Critical');
+  s.createException('EquipmentDown', 'RC-02', 'Rod cutting station 2 hydraulic failure - parts on order', 'Med');
+  s.createException('ShippingMisscan', 'SHP-001', 'Package PKG-005 missing from delivery manifest', 'High');
+  s.createException('ModelChange', 'PKG-013', 'Engineering revised hanger type from Clevis to Trapeze', 'Med');
+  
   console.log('✅ Bootstrap completed - loaded', expandedHangers.length, 'hangers and', seed.packages.length, 'packages for', seed.projects.length, 'project(s)');
 }
