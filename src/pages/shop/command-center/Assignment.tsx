@@ -1,31 +1,40 @@
-import { useMemo, useState } from 'react'
-import { useDB } from '@/store/db'
-import { Filter, Search, AlertTriangle, ChevronDown, X, Building2 } from 'lucide-react'
-import { CrewAssignmentPanel } from '@/components/shop/CrewAssignmentPanel'
+import { useState, useMemo } from 'react'
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { Search, Filter, X, Package, Building2, ChevronDown, AlertTriangle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { CrewDashboard } from '@/components/shop/CrewDashboard'
+import { PackageQueueCard } from '@/components/shop/PackageQueueCard'
+import { useDB } from '@/store/db'
+import type { Project } from '@/store/db'
 
 export default function CommandCenterAssignment() {
   const {
     shopPackages,
     projects,
     teams,
+    assignments,
+    hangers,
     checkInventoryForPackage,
     createAssignmentsFromPackage,
     assignToTeam,
     advancePackage,
     log
   } = useDB()
-
-  // State
+  
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [projectFilter, setProjectFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [projectFilters, setProjectFilters] = useState<string[]>([])
 
   // Data - Use shopPackages for holistic shop view
-  const packages = shopPackages(projectFilter.length > 0 ? projectFilter : undefined)
+  const packages = shopPackages(projectFilters.length > 0 ? projectFilters : undefined)
   
   // Filter packages for crew assignment workflow
   const workflowPackages = useMemo(() => {
@@ -76,246 +85,215 @@ export default function CommandCenterAssignment() {
     ? packages.find(p => p.id === selectedPackageId) || null
     : null
 
-  // Handler
-  const handleAssignToCrew = (pkg: any, teamId: string) => {
-    const assignmentIds = createAssignmentsFromPackage(pkg.id, teamId)
-    assignToTeam(assignmentIds, teamId)
-    advancePackage(pkg.id, 'InFabrication')
+  // Handlers
+  const handleAssignPackage = (packageId: string, teamId: string) => {
+    const pkg = packages.find(p => p.id === packageId)
+    if (!pkg) return
+
+    // Create assignments from package
+    const assignmentIds = createAssignmentsFromPackage(packageId, teamId)
     
+    // Assign to team
+    assignToTeam(assignmentIds, teamId)
+    
+    // Advance package state
+    advancePackage(packageId, 'InFabrication')
+    
+    // Log the action
     const team = teams.find(t => t.id === teamId)
     log({
       user: 'shop-manager',
-      action: `AssignPackageToCrew:${pkg.id}:${teamId}`,
+      action: `AssignPackageToCrew:${packageId}:${teamId}`,
       before: { state: pkg.state },
       after: { state: 'InFabrication', teamId, teamName: team?.name }
     })
+    
+    // Clear selection if this package was selected
+    if (selectedPackageId === packageId) {
+      setSelectedPackageId(null)
+    }
   }
 
-  const handleProjectToggle = (projectId: string) => {
-    if (projectId === '') {
-      setProjectFilter([])
+  const handleProjectToggle = (projectId: string, checked: boolean | 'indeterminate') => {
+    if (checked) {
+      setProjectFilters(prev => [...prev, projectId])
     } else {
-      setProjectFilter(prev => 
-        prev.includes(projectId) 
-          ? prev.filter(id => id !== projectId)
-          : [...prev, projectId]
-      )
+      setProjectFilters(prev => prev.filter(id => id !== projectId))
     }
   }
 
   const removeProject = (projectId: string) => {
-    setProjectFilter(prev => prev.filter(id => id !== projectId))
+    setProjectFilters(prev => prev.filter(id => id !== projectId))
   }
 
   const clearAllProjects = () => {
-    setProjectFilter([])
+    setProjectFilters([])
   }
 
   return (
-    <div className="space-y-6 p-6 bg-background min-h-screen text-foreground">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Crew Assignment</h1>
-          <p className="text-muted-foreground">
-            Assign kitted packages to fabrication crews across all projects
-          </p>
-        </div>
-        
-        {/* Modern Project Filter */}
-        <div className="flex items-center gap-3">
+    <DndProvider backend={HTML5Backend}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Crew Assignment</h1>
+            <p className="text-muted-foreground">
+              Assign approved packages to fabrication crews using drag & drop
+            </p>
+          </div>
+          
+          {/* Project Filter */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="min-w-48 justify-between bg-card border-border text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  {projectFilter.length === 0 
-                    ? "All Projects" 
-                    : `${projectFilter.length} Project${projectFilter.length !== 1 ? 's' : ''}`
-                  }
-                </div>
-                <ChevronDown className="w-4 h-4 opacity-50" />
+              <Button variant="outline" className="gap-2">
+                <Filter className="w-4 h-4" />
+                Projects
+                {projectFilters.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {projectFilters.length}
+                  </Badge>
+                )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0 bg-popover border-border z-50" align="end">
-              <div className="p-3 border-b border-border">
-                <h4 className="font-medium text-sm text-popover-foreground">Filter by Projects</h4>
-              </div>
-              <div className="p-2">
-                <div
-                  onClick={() => handleProjectToggle('')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors ${
-                    projectFilter.length === 0 
-                      ? 'bg-accent text-accent-foreground' 
-                      : 'hover:bg-accent/50 text-popover-foreground'
-                  }`}
-                >
-                  <Building2 className="w-4 h-4" />
-                  <span className="font-medium">All Projects</span>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <div className="text-sm font-medium">Filter by Projects</div>
+                <div className="space-y-2 max-h-60 overflow-auto">
+                  {projects.map(project => (
+                    <div key={project.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={project.id}
+                        checked={projectFilters.includes(project.id)}
+                        onCheckedChange={(checked) => handleProjectToggle(project.id, checked)}
+                      />
+                      <label htmlFor={project.id} className="text-sm cursor-pointer">
+                        {project.name}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-                <div className="h-px bg-border my-2" />
-                {projects.map(project => (
-                  <div
-                    key={project.id}
-                    onClick={() => handleProjectToggle(project.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors ${
-                      projectFilter.includes(project.id)
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-accent/50 text-popover-foreground'
-                    }`}
-                  >
-                    <div className={`w-3 h-3 rounded border ${
-                      projectFilter.includes(project.id) 
-                        ? 'bg-primary border-primary' 
-                        : 'border-border'
-                    }`} />
-                    <span className="text-sm">{project.name}</span>
-                  </div>
-                ))}
-              </div>
-              {projectFilter.length > 0 && (
-                <div className="p-2 border-t border-border">
+                {projectFilters.length > 0 && (
                   <Button 
-                    onClick={clearAllProjects}
-                    variant="ghost" 
+                    variant="outline" 
                     size="sm" 
-                    className="w-full text-xs text-muted-foreground hover:text-foreground"
+                    onClick={clearAllProjects}
+                    className="w-full"
                   >
-                    Clear Selection
+                    Clear All
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </PopoverContent>
           </Popover>
-          
-          {/* Selected Project Badges */}
-          {projectFilter.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {projectFilter.map(projectId => {
-                const project = projects.find(p => p.id === projectId)
-                return project ? (
-                  <Badge 
-                    key={projectId} 
-                    variant="secondary" 
-                    className="gap-1 bg-secondary/50 text-secondary-foreground hover:bg-secondary"
-                  >
-                    <span className="text-xs">{project.name}</span>
-                    <X 
-                      className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        removeProject(projectId)
-                      }}
-                    />
-                  </Badge>
-                ) : null
-              })}
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="grid lg:grid-cols-12 gap-6">
-        {/* Package Queue - Left */}
-        <div className="lg:col-span-4">
-          <div className="border border-border rounded-xl bg-card">
-            {/* Queue Header */}
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-card-foreground">Package Queue</h2>
-                <div className="text-sm text-muted-foreground">
-                  {filteredPackages.length} packages
-                </div>
-              </div>
-              
-              {/* Filters */}
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search packages..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-input border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
+        {/* Selected Project Filters */}
+        {projectFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {projectFilters.map(projectId => {
+              const project = projects.find(p => p.id === projectId)
+              if (!project) return null
+              return (
+                <Badge key={projectId} variant="secondary" className="gap-1">
+                  {project.name}
+                  <X 
+                    className="w-3 h-3 cursor-pointer" 
+                    onClick={() => removeProject(projectId)}
                   />
-                </div>
-                
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-input border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  <option value="all">All States</option>
-                  <option value="Kitted">Ready to Assign</option>
-                  <option value="InFabrication">In Fabrication</option>
-                </select>
-              </div>
-            </div>
+                </Badge>
+              )
+            })}
+          </div>
+        )}
 
-            {/* Package List */}
-            <div className="max-h-[60vh] overflow-auto">
-              {filteredPackages.map(pkg => {
-                const isSelected = selectedPackageId === pkg.id
-                const hasShortages = checkInventoryForPackage(pkg.id).some(line => line.shortfall > 0)
-                
-                return (
-                  <div
-                    key={pkg.id}
-                    onClick={() => setSelectedPackageId(pkg.id)}
-                    className={`p-4 border-b border-border cursor-pointer transition-colors ${
-                      isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50 text-card-foreground'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="font-medium text-sm">{pkg.name}</div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        pkg.state === 'Kitted' ? 'bg-purple-500/20 text-purple-300' :
-                        'bg-blue-500/20 text-blue-300'
-                      }`}>
-                        {pkg.state}
-                      </span>
-                    </div>
-                    
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {pkg.id} • Level {pkg.level} / Zone {pkg.zone}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-xs">
-                      <span>{pkg.hangerIds.length} hangers</span>
-                      {hasShortages && (
-                        <span className="text-destructive flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          Shortages
-                        </span>
-                      )}
-                    </div>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Package Queue */}
+          <div className="xl:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Package Queue
+                </CardTitle>
+                <div className="space-y-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search packages..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
                   </div>
-                )
-              })}
-              
-              {filteredPackages.length === 0 && (
-                <div className="p-8 text-center text-muted-foreground">
-                  <div className="text-sm">No packages ready for crew assignment</div>
+                  
+                  {/* Status Filter */}
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant={statusFilter === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setStatusFilter('all')}
+                      className="justify-start"
+                    >
+                      All ({filteredPackages.length})
+                    </Button>
+                    <Button
+                      variant={statusFilter === 'Kitted' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setStatusFilter('Kitted')}
+                      className="justify-start"
+                    >
+                      Ready ({filteredPackages.filter(p => p.state === 'Kitted').length})
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </CardHeader>
+              
+              <CardContent>
+                <ScrollArea className="h-[600px]">
+                  <div className="space-y-3">
+                    {filteredPackages.map(pkg => {
+                      const hasShortage = checkInventoryForPackage(pkg.id).some(line => line.shortfall > 0)
+                      const estimatedHours = pkg.hangerIds.reduce((total, hangerId) => {
+                        const hanger = hangers.find(h => h.id === hangerId)
+                        return total + (hanger?.estHours || 2)
+                      }, 0)
+                      
+                      return (
+                        <PackageQueueCard
+                          key={pkg.id}
+                          pkg={pkg}
+                          estimatedHours={estimatedHours}
+                          hasShortage={hasShortage}
+                          onClick={() => setSelectedPackageId(pkg.id)}
+                        />
+                      )
+                    })}
+                    
+                    {filteredPackages.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <div className="text-sm">No packages match the current filters</div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Crew Dashboard */}
+          <div className="xl:col-span-3">
+            <CrewDashboard
+              teams={teams}
+              assignments={assignments}
+              hangers={hangers}
+              onAssignPackage={handleAssignPackage}
+            />
           </div>
         </div>
-
-        {/* Main Panel - Right */}
-        <div className="lg:col-span-8">
-          <CrewAssignmentPanel
-            pkg={selectedPackage}
-            teams={teams}
-            onAssignToCrew={handleAssignToCrew}
-          />
-        </div>
       </div>
-    </div>
+    </DndProvider>
   )
 }
