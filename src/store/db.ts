@@ -298,6 +298,11 @@ type DB = {
   scopedPackages: () => Package[];
   scopedHangers: () => Hanger[];
   scopedAssignments: () => Assignment[];
+  
+  // Shop Management Selectors (all projects by default)
+  shopPackages: (projectIds?: string[]) => Package[];
+  shopHangers: (projectIds?: string[]) => Hanger[];
+  shopAssignments: (projectIds?: string[]) => Assignment[];
 };
 
 export const useDB = create<DB>()(
@@ -849,6 +854,28 @@ export const useDB = create<DB>()(
       scopedAssignments: () => {
         const pid = get().activeProjectId;
         return pid ? get().assignments.filter(a => a.projectId === pid) : get().assignments;
+      },
+
+      // Shop Management Selectors (all projects by default, with optional filtering)
+      shopPackages: (projectIds) => {
+        const packages = get().packages;
+        return projectIds && projectIds.length > 0 
+          ? packages.filter(p => projectIds.includes(p.projectId))
+          : packages;
+      },
+      
+      shopHangers: (projectIds) => {
+        const hangers = get().hangers;
+        return projectIds && projectIds.length > 0 
+          ? hangers.filter(h => projectIds.includes(h.projectId))
+          : hangers;
+      },
+      
+      shopAssignments: (projectIds) => {
+        const assignments = get().assignments;
+        return projectIds && projectIds.length > 0 
+          ? assignments.filter(a => projectIds.includes(a.projectId))
+          : assignments;
       },
     }),
     { name: 'msuite-demo-db' }

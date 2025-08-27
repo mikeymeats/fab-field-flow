@@ -5,7 +5,8 @@ import { CrewAssignmentPanel } from '@/components/shop/CrewAssignmentPanel'
 
 export default function CommandCenterAssignment() {
   const {
-    scopedPackages,
+    shopPackages,
+    projects,
     teams,
     checkInventoryForPackage,
     createAssignmentsFromPackage,
@@ -18,9 +19,10 @@ export default function CommandCenterAssignment() {
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState<string[]>([])
 
-  // Data
-  const packages = scopedPackages()
+  // Data - Use shopPackages for holistic shop view
+  const packages = shopPackages(projectFilter.length > 0 ? projectFilter : undefined)
   
   // Filter packages for crew assignment workflow
   const workflowPackages = useMemo(() => {
@@ -93,8 +95,28 @@ export default function CommandCenterAssignment() {
         <div>
           <h1 className="text-2xl font-bold">Crew Assignment</h1>
           <p className="text-gray-400">
-            Assign kitted packages to fabrication crews
+            Assign kitted packages to fabrication crews across all projects
           </p>
+        </div>
+        
+        {/* Project Filter */}
+        <div className="flex items-center gap-4">
+          <select
+            multiple
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(Array.from(e.target.selectedOptions, option => option.value))}
+            className="px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white text-sm min-w-48"
+          >
+            <option value="">All Projects</option>
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>{project.name}</option>
+            ))}
+          </select>
+          {projectFilter.length > 0 && (
+            <div className="text-sm text-gray-400">
+              Filtering {projectFilter.length} project{projectFilter.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       </div>
 

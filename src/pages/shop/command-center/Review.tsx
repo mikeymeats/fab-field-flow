@@ -5,8 +5,9 @@ import { PackageReviewPanel } from '@/components/shop/PackageReviewPanel'
 
 export default function CommandCenterReview() {
   const {
-    scopedPackages,
-    scopedHangers,
+    shopPackages,
+    shopHangers,
+    projects,
     checkInventoryForPackage,
     advancePackage,
     updatePackage,
@@ -17,10 +18,11 @@ export default function CommandCenterReview() {
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState<string[]>([])
 
-  // Data
-  const packages = scopedPackages()
-  const hangers = scopedHangers()
+  // Data - Use shopPackages for holistic shop view
+  const packages = shopPackages(projectFilter.length > 0 ? projectFilter : undefined)
+  const hangers = shopHangers(projectFilter.length > 0 ? projectFilter : undefined)
   
   // Filter packages for shop manager workflow
   const workflowPackages = useMemo(() => {
@@ -108,8 +110,28 @@ export default function CommandCenterReview() {
         <div>
           <h1 className="text-2xl font-bold">Package Review</h1>
           <p className="text-gray-400">
-            Review submitted packages and approve for fabrication
+            Review and approve packages for fabrication across all projects
           </p>
+        </div>
+        
+        {/* Project Filter */}
+        <div className="flex items-center gap-4">
+          <select
+            multiple
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(Array.from(e.target.selectedOptions, option => option.value))}
+            className="px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white text-sm min-w-48"
+          >
+            <option value="">All Projects</option>
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>{project.name}</option>
+            ))}
+          </select>
+          {projectFilter.length > 0 && (
+            <div className="text-sm text-gray-400">
+              Filtering {projectFilter.length} project{projectFilter.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       </div>
 
