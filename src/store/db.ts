@@ -6,6 +6,103 @@ export type Project = SeedProject;
 export type Package = SeedPackage;
 export type Hanger = SeedHanger;
 
+// === PERSONA & USER SYSTEM ===
+export type PersonaType = 
+  | 'BIMCoordinator' 
+  | 'ProjectManager' 
+  | 'ShopManager' 
+  | 'InventoryCoordinator' 
+  | 'KittingLead' 
+  | 'ShopFabricator' 
+  | 'ShopQAInspector' 
+  | 'ShippingCoordinator' 
+  | 'Driver'
+  | 'FieldManager' 
+  | 'Foreman' 
+  | 'Installer'
+  | 'Executive' 
+  | 'ITAdmin';
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;  
+  persona: PersonaType;
+  permissions: string[];
+  teamId?: string;
+  crewId?: string;
+  shift?: 'Day' | 'Swing' | 'Night';
+};
+
+// === ENHANCED STATE MODEL ===
+export type HangerState = 
+  | 'Draft' 
+  | 'IssuedForFab' 
+  | 'ApprovedForFab' 
+  | 'Kitted' 
+  | 'InFabrication' 
+  | 'Assembled' 
+  | 'ShopQA' 
+  | 'ReadyToShip' 
+  | 'InTransit' 
+  | 'DeliveredToSite' 
+  | 'Staged' 
+  | 'Installed' 
+  | 'FieldQA' 
+  | 'AsBuilt' 
+  | 'Closed'
+  | 'Rework'
+  | 'Hold';
+
+export type FieldOrder = {
+  id: string;
+  projectId: string;
+  createdBy: string;
+  approvedBy?: string;
+  template?: string;
+  items: { hangerId?: string; hangerType: string; qty: number; notes?: string }[];
+  priority: 'Low' | 'Med' | 'High';
+  state: 'Draft' | 'Submitted' | 'Approved' | 'InFab' | 'Delivered';
+  createdAt: string;
+  approvedAt?: string;
+};
+
+export type QAResult = {
+  id: string;
+  hangerId: string;
+  assignmentId?: string;
+  type: 'ShopQA' | 'FieldQA';
+  inspector: string;
+  result: 'Pass' | 'Fail' | 'Rework';
+  measurements?: { key: string; value: number; unit: string; spec?: string }[];
+  photos?: string[];
+  notes?: string;
+  signature?: string;
+  createdAt: string;
+};
+
+export type Exception = {
+  id: string;
+  type: 'InventoryShort' | 'ShippingMisscan' | 'QAFail' | 'ModelChange' | 'Other';
+  ref: string; // hangerId, packageId, shipmentId, etc.
+  description: string;
+  severity: 'Low' | 'Med' | 'High' | 'Critical';
+  assignedTo?: string;
+  state: 'Open' | 'InProgress' | 'Resolved' | 'Closed';
+  createdAt: string;
+  resolvedAt?: string;
+};
+
+export type PickList = {
+  id: string;
+  packageId: string;
+  items: { sku: string; desc: string; qty: number; pickedQty?: number; location?: string }[];
+  assignedTo?: string;
+  state: 'Open' | 'InProgress' | 'Complete';
+  createdAt: string;
+  completedAt?: string;
+};
+
 export type WorkOrder = {
   id: string;
   projectId: string;
@@ -127,6 +224,14 @@ type DB = {
   inventory: InventoryItem[];
   teams: Team[];
   assignments: Assignment[];
+  fieldOrders: FieldOrder[];
+  qaResults: QAResult[];
+  exceptions: Exception[];
+  pickLists: PickList[];
+  
+  // User & Persona System
+  currentUser: User | null;
+  users: User[];
   
   // Scope
   activeProjectId: string | null;
@@ -146,17 +251,29 @@ type DB = {
   autoSchedule: () => void;
   log: (e: Omit<Audit, 'id' | 'at'>) => void;
   
-  // New Shop Manager & Team actions
+  // User & Auth Actions
+  loginAs: (persona: PersonaType) => void;
+  logout: () => void;
+  hasPermission: (permission: string) => boolean;
+  
+  // Shop Manager & Team actions
   recomputeInventory: () => void;
   checkInventoryForPackage: (pkgId: string) => { sku: string; desc: string; uom: 'ea' | 'ft'; required: number; onHand: number; shortfall: number }[];
   reserveInventoryForPackage: (pkgId: string) => void;
   ensureTeamSeeds: () => void;
-  createAssignmentsFromPackage: (pkgId: string, teamId?: string) => string[];  // returns assignment IDs
+  createAssignmentsFromPackage: (pkgId: string, teamId?: string) => string[];
   assignToTeam: (assignmentIds: string[], teamId: string) => void;
   startAssignment: (id: string) => void;
   completeStep: (id: string, stepKey: AssignmentStep['key'], data?: any) => void;
   pushToolEvent: (e: Omit<ToolEvent, 'id' | 'at'>) => void;
   finishAssignment: (id: string) => void;
+  
+  // Field & QA Actions
+  createFieldOrder: (items: FieldOrder['items'], priority: 'Low' | 'Med' | 'High') => string;
+  approveFieldOrder: (id: string) => void;
+  recordQAResult: (hangerId: string, type: 'ShopQA' | 'FieldQA', result: 'Pass' | 'Fail' | 'Rework', data: Partial<QAResult>) => string;
+  createException: (type: Exception['type'], ref: string, description: string, severity: Exception['severity']) => string;
+  resolveException: (id: string) => void;
   
   // Selectors
   scopedPackages: () => Package[];
@@ -175,6 +292,12 @@ export const useDB = create<DB>()(
       inventory: [],
       teams: [],
       assignments: [],
+      fieldOrders: [],
+      qaResults: [],
+      exceptions: [],
+      pickLists: [],
+      currentUser: null,
+      users: [],
       crews: [
         {
           id: 'CR-01',
@@ -384,10 +507,41 @@ export const useDB = create<DB>()(
             {
               id: `AUD-${String(get().audits.length + 1).padStart(4, '0')}`,
               at: new Date().toISOString(),
+              user: get().currentUser?.name || e.user,
               ...e
             }
           ]
         }),
+
+      // === USER & AUTH ACTIONS ===
+      loginAs: (persona) => {
+        const user: User = {
+          id: `USER-${persona}`,
+          name: persona.replace(/([A-Z])/g, ' $1').trim(),
+          email: `${persona.toLowerCase()}@msuite.demo`,
+          persona,
+          permissions: [], // Will be populated from PERSONA_PERMISSIONS
+        };
+        set({ currentUser: user });
+        get().log({ user: user.name, action: `Login:${persona}`, before: null, after: { persona } });
+      },
+
+      logout: () => {
+        const currentUser = get().currentUser;
+        set({ currentUser: null });
+        get().log({ user: 'system', action: 'Logout', before: currentUser, after: null });
+      },
+
+      hasPermission: (permission) => {
+        const user = get().currentUser;
+        if (!user) return false;
+        // Import PERSONA_PERMISSIONS dynamically or hardcode basic permissions here
+        const adminPermissions = ['admin:*', 'write:*'];
+        if (user.persona === 'ITAdmin') return true;
+        if (user.persona === 'ShopManager' && permission.startsWith('write:')) return true;
+        if (user.persona === 'ProjectManager' && permission.includes('approve')) return true;
+        return user.permissions.includes(permission);
+      },
 
       scopedPackages: () => {
         const pid = get().activeProjectId;
@@ -533,7 +687,72 @@ export const useDB = create<DB>()(
         const done = { ...as, state: 'Done' as const, finishedAt: new Date().toISOString() };
         set({ assignments: get().assignments.map(a => a.id === id ? done : a) });
         get().log({ user: 'fabricator', action: `FinishAssignment:${id}`, before: as, after: done });
-      }
+      },
+
+      // === FIELD & QA ACTIONS ===
+      createFieldOrder: (items, priority) => {
+        const id = `FO-${String(get().fieldOrders.length + 1).padStart(3, '0')}`;
+        const fieldOrder: FieldOrder = {
+          id,
+          projectId: get().activeProjectId || 'PRJ-001',
+          createdBy: get().currentUser?.id || 'USER-FOREMAN',
+          items,
+          priority,
+          state: 'Draft',
+          createdAt: new Date().toISOString(),
+        };
+        set({ fieldOrders: [...get().fieldOrders, fieldOrder] });
+        get().log({ user: 'foreman', action: `CreateFieldOrder:${id}`, before: null, after: fieldOrder });
+        return id;
+      },
+
+      approveFieldOrder: (id) => {
+        const fieldOrder = get().fieldOrders.find(fo => fo.id === id);
+        if (!fieldOrder) return;
+        const updated = { ...fieldOrder, state: 'Approved' as const, approvedBy: get().currentUser?.id, approvedAt: new Date().toISOString() };
+        set({ fieldOrders: get().fieldOrders.map(fo => fo.id === id ? updated : fo) });
+        get().log({ user: 'pm', action: `ApproveFieldOrder:${id}`, before: fieldOrder, after: updated });
+      },
+
+      recordQAResult: (hangerId, type, result, data) => {
+        const id = `QA-${String(get().qaResults.length + 1).padStart(4, '0')}`;
+        const qaResult: QAResult = {
+          id,
+          hangerId,
+          type,
+          inspector: get().currentUser?.id || 'QA-INSPECTOR',
+          result,
+          createdAt: new Date().toISOString(),
+          ...data,
+        };
+        set({ qaResults: [...get().qaResults, qaResult] });
+        get().log({ user: 'qa', action: `RecordQAResult:${hangerId}:${result}`, before: null, after: qaResult });
+        return id;
+      },
+
+      createException: (type, ref, description, severity) => {
+        const id = `EXC-${String(get().exceptions.length + 1).padStart(4, '0')}`;
+        const exception: Exception = {
+          id,
+          type,
+          ref,
+          description,
+          severity,
+          state: 'Open',
+          createdAt: new Date().toISOString(),
+        };
+        set({ exceptions: [...get().exceptions, exception] });
+        get().log({ user: 'system', action: `CreateException:${type}:${ref}`, before: null, after: exception });
+        return id;
+      },
+
+      resolveException: (id) => {
+        const exception = get().exceptions.find(e => e.id === id);
+        if (!exception) return;
+        const resolved = { ...exception, state: 'Resolved' as const, resolvedAt: new Date().toISOString() };
+        set({ exceptions: get().exceptions.map(e => e.id === id ? resolved : e) });
+        get().log({ user: 'system', action: `ResolveException:${id}`, before: exception, after: resolved });
+      },
     }),
     { name: 'msuite-demo-db' }
   )

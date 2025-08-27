@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
+import { PersonaAuth } from "@/components/PersonaAuth";
 import { Dashboard } from "@/pages/shop/Dashboard";
 import { Hangers } from "@/pages/shop/Hangers";
 import Packages from "@/pages/shop/Packages";
@@ -21,17 +22,27 @@ import ProjectDetail from "@/pages/projects/Detail";
 import ShopManager from "@/pages/shop/Manager";
 import TeamHome from "@/pages/shop/Team";
 import TaskRunner from "@/pages/shop/TaskRunner";
+import InventoryIndex from "@/pages/inventory/Index";
+import FieldReceiving from "@/pages/field/Receiving";
+import ExecutiveAnalytics from "@/pages/analytics/Executive";
 import { bootstrapOnce } from "@/lib/bootstrap";
+import { useDB } from "@/store/db";
+import type { PersonaType } from "@/store/db";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const { currentUser, loginAs } = useDB();
 
   useEffect(() => {
     bootstrapOnce();
     setIsLoading(false);
   }, []);
+
+  const handleLogin = (persona: PersonaType) => {
+    loginAs(persona);
+  };
 
   if (isLoading) {
     return (
@@ -41,6 +52,16 @@ const App = () => {
           <p className="text-muted-foreground">Loading MSUITE Fab & Field...</p>
         </div>
       </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <PersonaAuth onLogin={handleLogin} />
+        </TooltipProvider>
+      </QueryClientProvider>
     );
   }
 
@@ -69,6 +90,9 @@ const App = () => {
                 <Route path="/shop/manager" element={<ShopManager />} />
                 <Route path="/shop/team" element={<TeamHome />} />
                 <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
+                <Route path="/inventory" element={<InventoryIndex />} />
+                <Route path="/field/receiving" element={<FieldReceiving />} />
+                <Route path="/analytics/executive" element={<ExecutiveAnalytics />} />
                 <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
               </Routes>
             </main>
