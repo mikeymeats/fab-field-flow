@@ -20,6 +20,11 @@ import Analytics from "@/pages/shop/Analytics";
 import ProjectsIndex from "@/pages/projects/Index";
 import ProjectDetail from "@/pages/projects/Detail";
 import CommandCenter from "@/pages/shop/CommandCenter";
+import CommandCenterReview from "@/pages/shop/command-center/Review";
+import CommandCenterInventory from "@/pages/shop/command-center/Inventory";
+import CommandCenterAssignment from "@/pages/shop/command-center/Assignment";
+import CommandCenterExceptions from "@/pages/shop/command-center/Exceptions";
+import CommandCenterProduction from "@/pages/shop/command-center/Production";
 import TeamHome from "@/pages/shop/Team";
 import TaskRunner from "@/pages/shop/TaskRunner";
 import InventoryIndex from "@/pages/inventory/Index";
@@ -122,6 +127,11 @@ const App = () => {
                 <Route path="/shop/shipping" element={<Shipping />} />
                 <Route path="/shop/analytics" element={<Analytics />} />
                  <Route path="/shop/command-center" element={<CommandCenter />} />
+                 <Route path="/shop/command-center/review" element={<CommandCenterReview />} />
+                 <Route path="/shop/command-center/inventory" element={<CommandCenterInventory />} />
+                 <Route path="/shop/command-center/assignment" element={<CommandCenterAssignment />} />
+                 <Route path="/shop/command-center/exceptions" element={<CommandCenterExceptions />} />
+                 <Route path="/shop/command-center/production" element={<CommandCenterProduction />} />
                  <Route path="/shop/manager" element={<Navigate to="/shop/command-center" replace />} />
                 <Route path="/shop/team" element={<TeamHome />} />
                 <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
