@@ -1,25 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { mapCsvRow } from '@/lib/seedFromCsv';
+import type { SeedProject, SeedPackage, SeedHanger } from '@/data/seed';
 
-export type Hanger = ReturnType<typeof mapCsvRow> & {
-  status: string;
-};
-
-export type Package = {
-  id: string;
-  name: string;
-  level?: string;
-  zone?: string;
-  state: 'Planned' | 'Kitted' | 'Assembled' | 'ShopQAPassed' | 'Staged' | 'Loaded' | 'Delivered';
-  hangerIds: string[];
-  pickListId?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+export type Project = SeedProject;
+export type Package = SeedPackage;
+export type Hanger = SeedHanger;
 
 export type WorkOrder = {
   id: string;
+  projectId: string;
   packageId: string;
   team?: string;
   station?: string;
@@ -33,6 +22,7 @@ export type WorkOrder = {
 
 export type Shipment = {
   id: string;
+  projectId: string;
   stops: {
     location: string;
     type: 'Shop' | 'Galvanizer' | 'Painter' | 'Site';
@@ -71,32 +61,44 @@ export type Audit = {
 };
 
 type DB = {
-  hangers: Hanger[];
+  // Data
+  projects: Project[];
   packages: Package[];
+  hangers: Hanger[];
   workOrders: WorkOrder[];
   shipments: Shipment[];
   crews: Crew[];
   audits: Audit[];
   
+  // Scope
+  activeProjectId: string | null;
+  
   // Actions
+  hydrate: (projects: Project[], packages: Package[], hangers: Hanger[]) => void;
+  setActiveProject: (id: string) => void;
   seedFromCsv: (rows: Hanger[]) => void;
   groupPackages: () => void;
   createWorkOrder: (pkgId: string, init?: Partial<WorkOrder>) => string;
   createPickList: (pkgId: string) => string;
-  advancePackage: (pkgId: string, state: Package['state']) => void;
+  advancePackage: (pkgId: string, state: string) => void;
   setHangerState: (id: string, state: string) => void;
   createShipment: (pkgIds: string[], stops: Shipment['stops']) => string;
   updateWorkOrder: (id: string, updates: Partial<WorkOrder>) => void;
   deleteWorkOrder: (id: string) => void;
   autoSchedule: () => void;
   log: (e: Omit<Audit, 'id' | 'at'>) => void;
+  
+  // Selectors
+  scopedPackages: () => Package[];
+  scopedHangers: () => Hanger[];
 };
 
 export const useDB = create<DB>()(
   persist(
     (set, get) => ({
-      hangers: [],
+      projects: [],
       packages: [],
+      hangers: [],
       workOrders: [],
       shipments: [],
       audits: [],
@@ -123,11 +125,16 @@ export const useDB = create<DB>()(
           assignedZones: ['D']
         }
       ],
+      activeProjectId: null,
+
+      hydrate: (projects, packages, hangers) => set({ projects, packages, hangers }),
+      setActiveProject: (id) => set({ activeProjectId: id }),
 
       seedFromCsv: (rows) => set({ hangers: rows }),
 
       groupPackages: () => {
         const hs = get().hangers;
+        const projectId = get().activeProjectId || 'PRJ-001';
         const groups = new Map<string, string[]>();
         
         hs.forEach(h => {
@@ -137,13 +144,12 @@ export const useDB = create<DB>()(
 
         const pkgs: Package[] = Array.from(groups.entries()).map(([k, ids], i) => ({
           id: `PKG-${String(i + 1).padStart(3, '0')}`,
+          projectId,
           name: `Package ${k}`,
           level: k.split('-')[0],
           zone: k.split('-')[1],
           state: 'Planned',
-          hangerIds: ids,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          hangerIds: ids
         }));
 
         set({ packages: pkgs });
@@ -151,9 +157,12 @@ export const useDB = create<DB>()(
 
       createWorkOrder: (pkgId, init = {}) => {
         const id = `WO-${String(get().workOrders.length + 1).padStart(3, '0')}`;
+        const pkg = get().packages.find(p => p.id === pkgId);
+        const projectId = pkg?.projectId || get().activeProjectId || 'PRJ-000';
         const now = new Date().toISOString();
         const workOrder: WorkOrder = {
           id,
+          projectId,
           packageId: pkgId,
           state: 'Planned',
           priority: 'Med',
@@ -169,11 +178,10 @@ export const useDB = create<DB>()(
 
       createPickList: (pkgId) => {
         const pid = `PL-${String(Date.now()).slice(-4)}`;
-        const now = new Date().toISOString();
         
         set({
           packages: get().packages.map(p =>
-            p.id === pkgId ? { ...p, pickListId: pid, state: 'Kitted', updatedAt: now } : p
+            p.id === pkgId ? { ...p, pickListId: pid, state: 'Kitted' } : p
           )
         });
         
@@ -189,11 +197,10 @@ export const useDB = create<DB>()(
 
       advancePackage: (pkgId, state) => {
         const before = get().packages.find(p => p.id === pkgId);
-        const now = new Date().toISOString();
         
         set({
           packages: get().packages.map(p =>
-            p.id === pkgId ? { ...p, state, updatedAt: now } : p
+            p.id === pkgId ? { ...p, state } : p
           )
         });
         
@@ -207,11 +214,10 @@ export const useDB = create<DB>()(
 
       setHangerState: (id, state) => {
         const before = get().hangers.find(h => h.id === id);
-        const now = new Date().toISOString();
         
         set({
           hangers: get().hangers.map(h =>
-            h.id === id ? { ...h, status: state, updatedAt: now } : h
+            h.id === id ? { ...h, status: state } : h
           )
         });
         
@@ -225,6 +231,7 @@ export const useDB = create<DB>()(
 
       createShipment: (pkgIds, stops) => {
         const id = `SHP-${String(get().shipments.length + 1).padStart(3, '0')}`;
+        const projectId = get().activeProjectId || 'PRJ-000';
         const now = new Date().toISOString();
         
         const items = pkgIds.flatMap(pid => {
@@ -239,6 +246,7 @@ export const useDB = create<DB>()(
 
         const shipment: Shipment = {
           id,
+          projectId,
           stops,
           packages: pkgIds,
           bol: {
@@ -306,7 +314,17 @@ export const useDB = create<DB>()(
               ...e
             }
           ]
-        })
+        }),
+
+      scopedPackages: () => {
+        const pid = get().activeProjectId;
+        return pid ? get().packages.filter(p => p.projectId === pid) : get().packages;
+      },
+      
+      scopedHangers: () => {
+        const pid = get().activeProjectId;
+        return pid ? get().hangers.filter(h => h.projectId === pid) : get().hangers;
+      }
     }),
     { name: 'msuite-demo-db' }
   )

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,8 @@ import Kitting from "@/pages/shop/Kitting";
 import QA from "@/pages/shop/QA";
 import Shipping from "@/pages/shop/Shipping";
 import Analytics from "@/pages/shop/Analytics";
+import ProjectsIndex from "@/pages/projects/Index";
+import ProjectDetail from "@/pages/projects/Detail";
 import { bootstrapOnce } from "@/lib/bootstrap";
 
 const queryClient = new QueryClient();
@@ -49,7 +51,9 @@ const App = () => {
               <Header />
               <main className="flex-1 p-6">
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/" element={<Navigate to="/projects" replace />} />
+                  <Route path="/projects" element={<ProjectsIndex />} />
+                  <Route path="/projects/:projectId" element={<ProjectDetail />} />
                   <Route path="/shop/dashboard" element={<Dashboard />} />
                   <Route path="/shop/hangers" element={<Hangers />} />
                   <Route path="/shop/packages" element={<Packages />} />
