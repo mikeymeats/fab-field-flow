@@ -1,5 +1,17 @@
 // MSUITE Fab & Field — Demo Seed (Projects → Packages → Hangers → Items)
-export type SeedProject = { id: string; name: string; address?: string; startDate?: string; endDate?: string };
+export type SeedProject = { 
+  id: string; 
+  name: string; 
+  address?: string; 
+  startDate?: string; 
+  endDate?: string;
+  status: 'Planning' | 'Active' | 'OnHold' | 'Completed' | 'Cancelled';
+  isActive: boolean;
+  isArchived: boolean;
+  description?: string;
+  client?: string;
+  value?: number;
+};
 export type SeedPackage = { id: string; projectId: string; name: string; level?: string; zone?: string; state: string; hangerIds: string[]; pickListId?: string };
 export type SeedHangerItem = { sku: string; desc: string; uom: 'ea'|'ft'; qty: number };
 export type SeedHanger = {
@@ -19,18 +31,85 @@ export const seed: { projects: SeedProject[]; packages: SeedPackage[]; hangers: 
       name: "Riverview Medical Tower",
       address: "1200 Riverside Dr, Austin, TX",
       startDate: "2025-07-15",
-      endDate: "2026-03-31"
+      endDate: "2026-03-31",
+      status: "Active",
+      isActive: true,
+      isArchived: false,
+      description: "5-story medical facility with complex MEP systems including chilled water, steam, and sanitary systems",
+      client: "Austin Healthcare Partners",
+      value: 2450000
+    },
+    {
+      id: "PRJ-002",
+      name: "Downtown Office Complex Phase 2",
+      address: "800 Congress Ave, Austin, TX",
+      startDate: "2025-09-01",
+      endDate: "2026-08-15",
+      status: "Planning",
+      isActive: false,
+      isArchived: false,
+      description: "High-rise office building with state-of-the-art HVAC and plumbing systems",
+      client: "Meridian Development Group",
+      value: 3200000
+    },
+    {
+      id: "PRJ-003",
+      name: "Manufacturing Plant Expansion",
+      address: "4500 Industrial Blvd, Round Rock, TX",
+      startDate: "2024-11-01",
+      endDate: "2025-04-30",
+      status: "Completed",
+      isActive: false,
+      isArchived: false,
+      description: "Process piping and equipment support systems for pharmaceutical manufacturing",
+      client: "BioTech Industries LLC",
+      value: 1850000
+    },
+    {
+      id: "PRJ-004",
+      name: "University Research Building",
+      address: "2100 Speedway, Austin, TX",
+      startDate: "2025-01-15",
+      endDate: "2025-12-01",
+      status: "OnHold",
+      isActive: false,
+      isArchived: false,
+      description: "Laboratory and research facility with specialized exhaust and process systems",
+      client: "University of Texas",
+      value: 4100000
+    },
+    {
+      id: "PRJ-005",
+      name: "Retail Shopping Center",
+      address: "1500 S Lamar Blvd, Austin, TX",
+      startDate: "2024-03-01",
+      endDate: "2024-10-15",
+      status: "Completed",
+      isActive: false,
+      isArchived: true,
+      description: "Multi-tenant retail space with individual HVAC zones and common area systems",
+      client: "South Austin Properties",
+      value: 950000
     }
   ],
   packages: [
-    { id:"PKG-001", projectId:"PRJ-001", name:"PKG L2-ZA", level:"L2", zone:"ZA", state:"Planned", hangerIds:["HNG-1000","HNG-1001","HNG-1002"] },
-    { id:"PKG-002", projectId:"PRJ-001", name:"PKG L2-ZB", level:"L2", zone:"ZB", state:"Planned", hangerIds:["HNG-1003","HNG-1004","HNG-1005"] },
+    // PRJ-001 packages
+    { id:"PKG-001", projectId:"PRJ-001", name:"PKG L2-ZA", level:"L2", zone:"ZA", state:"Kitted", hangerIds:["HNG-1000","HNG-1001","HNG-1002"] },
+    { id:"PKG-002", projectId:"PRJ-001", name:"PKG L2-ZB", level:"L2", zone:"ZB", state:"Assembled", hangerIds:["HNG-1003","HNG-1004","HNG-1005"] },
     { id:"PKG-003", projectId:"PRJ-001", name:"PKG L3-ZA", level:"L3", zone:"ZA", state:"Planned", hangerIds:["HNG-1006","HNG-1007","HNG-1008"] },
     { id:"PKG-004", projectId:"PRJ-001", name:"PKG L3-ZB", level:"L3", zone:"ZB", state:"Planned", hangerIds:["HNG-1009","HNG-1010","HNG-1011"] },
-    { id:"PKG-005", projectId:"PRJ-001", name:"PKG L4-ZA", level:"L4", zone:"ZA", state:"Planned", hangerIds:["HNG-1012","HNG-1013","HNG-1014"] },
-    { id:"PKG-006", projectId:"PRJ-001", name:"PKG L4-ZB", level:"L4", zone:"ZB", state:"Planned", hangerIds:["HNG-1015","HNG-1016","HNG-1017"] },
+    { id:"PKG-005", projectId:"PRJ-001", name:"PKG L4-ZA", level:"L4", zone:"ZA", state:"ShopQAPassed", hangerIds:["HNG-1012","HNG-1013","HNG-1014"] },
+    { id:"PKG-006", projectId:"PRJ-001", name:"PKG L4-ZB", level:"L4", zone:"ZB", state:"Staged", hangerIds:["HNG-1015","HNG-1016","HNG-1017"] },
     { id:"PKG-007", projectId:"PRJ-001", name:"PKG L5-ZA", level:"L5", zone:"ZA", state:"Planned", hangerIds:["HNG-1018","HNG-1019","HNG-1020"] },
-    { id:"PKG-008", projectId:"PRJ-001", name:"PKG L5-ZB", level:"L5", zone:"ZB", state:"Planned", hangerIds:["HNG-1021","HNG-1022","HNG-1023"] }
+    { id:"PKG-008", projectId:"PRJ-001", name:"PKG L5-ZB", level:"L5", zone:"ZB", state:"Planned", hangerIds:["HNG-1021","HNG-1022","HNG-1023"] },
+    
+    // PRJ-002 packages  
+    { id:"PKG-101", projectId:"PRJ-002", name:"PKG B1-ZA", level:"B1", zone:"ZA", state:"Planned", hangerIds:["HNG-2000","HNG-2001"] },
+    { id:"PKG-102", projectId:"PRJ-002", name:"PKG L1-ZB", level:"L1", zone:"ZB", state:"Planned", hangerIds:["HNG-2002","HNG-2003"] },
+    
+    // PRJ-003 packages (completed project)
+    { id:"PKG-201", projectId:"PRJ-003", name:"PKG PROC-ZA", level:"L1", zone:"ZA", state:"Delivered", hangerIds:["HNG-3000","HNG-3001"] },
+    { id:"PKG-202", projectId:"PRJ-003", name:"PKG PROC-ZB", level:"L1", zone:"ZB", state:"Delivered", hangerIds:["HNG-3002","HNG-3003"] }
   ],
   hangers: [
     // ---------- PKG-001 (L2-ZA) ----------
