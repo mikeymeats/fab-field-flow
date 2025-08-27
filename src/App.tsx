@@ -28,12 +28,27 @@ import ExecutiveAnalytics from "@/pages/analytics/Executive";
 import { bootstrapOnce } from "@/lib/bootstrap";
 import { useDB } from "@/store/db";
 import type { PersonaType } from "@/store/db";
+import { Sidebar } from "@/components/layout/Sidebar";
+import Omnibar from "@/components/ui/Omnibar";
+import { Sun, Moon } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
+function ThemeToggle(){
+  function toggle(){
+    const d = document.documentElement
+    const isDark = d.classList.toggle('dark')
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+  }
+  return <button onClick={toggle} title="Toggle theme" className="p-2 rounded-full hover:bg-white/5">
+    <Sun className="w-4 h-4 hidden dark:block"/><Moon className="w-4 h-4 block dark:hidden"/>
+    <span className="sr-only">Toggle theme</span>
+  </button>
+}
+
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const { currentUser, loginAs } = useDB();
+  const { currentUser, loginAs, activeProjectId, projects } = useDB();
 
   useEffect(() => {
     bootstrapOnce();
@@ -65,15 +80,24 @@ const App = () => {
     );
   }
 
+  const active = projects.find(p=>p.id===activeProjectId);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
+        <div className="min-h-screen bg-neutral-950 text-neutral-100 flex">
+          <Sidebar/>
+
           <div className="flex-1 flex flex-col">
-            <Header />
-            <main className="flex-1 p-6">
+            <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-4">
+              <div className="font-semibold">DEWALT • Hanger Fab & Field</div>
+              <div className="flex items-center gap-3">
+                {active ? <span className="text-xs px-2 py-1 rounded bg-white/10 border border-white/10">Scoped: {active.id}</span> : null}
+                <ThemeToggle/>
+              </div>
+            </header>
+
+            <main className="flex-1 p-4">
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={<ProjectsIndex />} />
@@ -97,8 +121,9 @@ const App = () => {
               </Routes>
             </main>
           </div>
+
+          <Omnibar/>
         </div>
-      </SidebarProvider>
       <Toaster />
       <Sonner />
       </TooltipProvider>
