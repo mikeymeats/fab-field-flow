@@ -7,6 +7,8 @@ export async function bootstrapOnce() {
   
   s.hydrate(seed.projects, seed.packages, seed.hangers);
   s.setActiveProject(seed.projects[0].id);
+  s.recomputeInventory();
+  s.ensureTeamSeeds();
   
   console.log('✅ Bootstrap completed - loaded', seed.hangers.length, 'hangers and', seed.packages.length, 'packages for', seed.projects.length, 'project(s)');
 }

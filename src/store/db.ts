@@ -60,6 +60,61 @@ export type Audit = {
   after?: any;
 };
 
+// --- New types for Shop Manager and Team workflows ---
+export type InventoryItem = {
+  sku: string;
+  desc: string;
+  uom: 'ea' | 'ft';
+  onHand: number;
+  min: number;
+  reorderTo: number;
+  locations: { name: string; qty: number }[];
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  stations: ('RodCut' | 'UnistrutCut' | 'Assembly' | 'ShopQA')[];
+  members: { id: string; name: string; role?: string }[];
+};
+
+export type AssignmentStep = {
+  key: 'RodCut' | 'UnistrutCut' | 'Assembly' | 'QA';
+  label: string;
+  requiredTools?: string[];   // tool IDs/types (stub)
+  inputs?: { key: string; label: string; type: 'number' | 'text'; unit?: string; required?: boolean }[];
+  complete?: boolean;
+  data?: Record<string, any>;
+  startedAt?: string;
+  completedAt?: string;
+};
+
+export type ToolEvent = {
+  id: string;
+  assignmentId: string;
+  station: 'RodCut' | 'UnistrutCut' | 'Assembly' | 'ShopQA';
+  toolId: string;
+  event: 'start' | 'stop' | 'torque' | 'note';
+  value?: number | string;
+  at: string;
+};
+
+export type Assignment = {
+  id: string;
+  projectId: string;
+  packageId: string;
+  hangerId: string;
+  teamId?: string;
+  assigneeId?: string;
+  priority?: 'Low' | 'Med' | 'High'; 
+  state: 'Queued' | 'InProgress' | 'Paused' | 'QA' | 'Done';
+  steps: AssignmentStep[];
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  toolEvents: ToolEvent[];
+};
+
 type DB = {
   // Data
   projects: Project[];
@@ -69,6 +124,9 @@ type DB = {
   shipments: Shipment[];
   crews: Crew[];
   audits: Audit[];
+  inventory: InventoryItem[];
+  teams: Team[];
+  assignments: Assignment[];
   
   // Scope
   activeProjectId: string | null;
@@ -88,6 +146,18 @@ type DB = {
   autoSchedule: () => void;
   log: (e: Omit<Audit, 'id' | 'at'>) => void;
   
+  // New Shop Manager & Team actions
+  recomputeInventory: () => void;
+  checkInventoryForPackage: (pkgId: string) => { sku: string; desc: string; uom: 'ea' | 'ft'; required: number; onHand: number; shortfall: number }[];
+  reserveInventoryForPackage: (pkgId: string) => void;
+  ensureTeamSeeds: () => void;
+  createAssignmentsFromPackage: (pkgId: string, teamId?: string) => string[];  // returns assignment IDs
+  assignToTeam: (assignmentIds: string[], teamId: string) => void;
+  startAssignment: (id: string) => void;
+  completeStep: (id: string, stepKey: AssignmentStep['key'], data?: any) => void;
+  pushToolEvent: (e: Omit<ToolEvent, 'id' | 'at'>) => void;
+  finishAssignment: (id: string) => void;
+  
   // Selectors
   scopedPackages: () => Package[];
   scopedHangers: () => Hanger[];
@@ -102,6 +172,9 @@ export const useDB = create<DB>()(
       workOrders: [],
       shipments: [],
       audits: [],
+      inventory: [],
+      teams: [],
+      assignments: [],
       crews: [
         {
           id: 'CR-01',
@@ -324,6 +397,142 @@ export const useDB = create<DB>()(
       scopedHangers: () => {
         const pid = get().activeProjectId;
         return pid ? get().hangers.filter(h => h.projectId === pid) : get().hangers;
+      },
+
+      // Create inventory by rolling up hanger items across the active (or all) project(s)
+      recomputeInventory: () => {
+        const { hangers, activeProjectId } = get();
+        const scope = activeProjectId ? hangers.filter(h => h.projectId === activeProjectId) : hangers;
+        const roll = new Map<string, { sku: string; desc: string; uom: 'ea' | 'ft'; required: number }>();
+        scope.forEach(h => (h.items || []).forEach(it => {
+          const k = it.sku;
+          roll.set(k, {
+            sku: k,
+            desc: it.desc,
+            uom: it.uom,
+            required: (roll.get(k)?.required || 0) + Number(it.qty || 0)
+          });
+        }));
+        // seed onHand = ~60% of required to drive interesting shortages
+        const inv: InventoryItem[] = Array.from(roll.values()).map(r => ({
+          sku: r.sku, desc: r.desc, uom: r.uom,
+          onHand: Math.round(r.required * 0.6),
+          min: Math.ceil(r.required * 0.2),
+          reorderTo: Math.ceil(r.required * 1.0),
+          locations: [{ name: 'Main', qty: Math.round(r.required * 0.6) }]
+        }));
+        set({ inventory: inv });
+      },
+
+      checkInventoryForPackage: (pkgId) => {
+        const { packages, hangers, inventory } = get();
+        const pkg = packages.find(p => p.id === pkgId);
+        if (!pkg) return [];
+        const hs = hangers.filter(h => pkg.hangerIds.includes(h.id));
+        const need = new Map<string, { sku: string; desc: string; uom: 'ea' | 'ft'; required: number }>();
+        hs.forEach(h => (h.items || []).forEach(it => {
+          const k = it.sku;
+          need.set(k, { sku: k, desc: it.desc, uom: it.uom, required: (need.get(k)?.required || 0) + Number(it.qty || 0) });
+        }));
+        return Array.from(need.values()).map(n => {
+          const inv = inventory.find(i => i.sku === n.sku);
+          const onHand = inv ? inv.onHand : 0;
+          const shortfall = Math.max(0, Math.ceil(n.required - onHand));
+          return { ...n, onHand, shortfall };
+        });
+      },
+
+      reserveInventoryForPackage: (pkgId) => {
+        const { inventory } = get();
+        const delta = get().checkInventoryForPackage(pkgId);
+        const next = inventory.map(it => {
+          const need = delta.find(d => d.sku === it.sku);
+          if (!need) return it;
+          const take = Math.min(it.onHand, Math.ceil(need.required));
+          return { ...it, onHand: it.onHand - take, locations: [{ ...it.locations[0], qty: Math.max(0, (it.locations[0]?.qty || 0) - take) }] };
+        });
+        set({ inventory: next });
+        get().log({ user: 'manager', action: `ReserveInventory:${pkgId}`, before: null, after: delta });
+      },
+
+      ensureTeamSeeds: () => {
+        if (get().teams.length) return;
+        set({
+          teams: [
+            { id: 'TEAM-A', name: 'Team Alpha', stations: ['RodCut', 'UnistrutCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-01', name: 'Sam' }, { id: 'U-02', name: 'Riley' }] },
+            { id: 'TEAM-B', name: 'Team Bravo', stations: ['RodCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-03', name: 'Drew' }] },
+            { id: 'TEAM-C', name: 'Team Charlie', stations: ['UnistrutCut', 'Assembly'], members: [{ id: 'U-04', name: 'Jordan' }] },
+          ]
+        });
+      },
+
+      // Simple step template by hanger type
+      createAssignmentsFromPackage: (pkgId, teamId) => {
+        const { packages, hangers, activeProjectId } = get();
+        const pkg = packages.find(p => p.id === pkgId); if (!pkg) return [];
+        const ids: string[] = [];
+        const now = new Date().toISOString();
+        const stepTemplate = (type: string): AssignmentStep[] => {
+          const base = [
+            { key: 'RodCut', label: 'Cut threaded rods to length', requiredTools: ['TorqueWrench?', 'RodCutter'], inputs: [{ key: 'rodCount', label: '# rods cut', type: 'number', required: true }] },
+            { key: 'UnistrutCut', label: 'Cut Unistrut to length', requiredTools: ['UnistrutCutter'], inputs: [{ key: 'strutLength', label: 'Total strut length (ft)', type: 'number', required: true }] },
+            { key: 'Assembly', label: 'Assemble hanger hardware', requiredTools: ['ImpactDriver'], inputs: [{ key: 'notes', label: 'Assembly notes', type: 'text' }] },
+            { key: 'QA', label: 'Shop QA & torque check', requiredTools: ['TorqueWrench'], inputs: [{ key: 'torque', label: 'Torque (ft·lb)', type: 'number', required: true }] }
+          ] as AssignmentStep[];
+          if (type === 'Clevis') return [base[0], base[2], base[3]];
+          if (type === 'Seismic') return [base[0], base[1], base[2], base[3]];
+          return base;
+        };
+        const asns = pkg.hangerIds.map((hid, i) => {
+          const h = hangers.find(x => x.id === hid)!;
+          return {
+            id: `ASG-${pkg.id}-${i + 1}`,
+            projectId: activeProjectId || h.projectId,
+            packageId: pkg.id,
+            hangerId: h.id,
+            teamId,
+            state: 'Queued' as const,
+            priority: 'Med' as const,
+            steps: stepTemplate(h.type).map(s => ({ ...s })),
+            createdAt: now,
+            toolEvents: []
+          } as Assignment;
+        });
+        set({ assignments: [...get().assignments, ...asns] });
+        get().log({ user: 'manager', action: `CreateAssignmentsFromPackage:${pkgId}`, before: null, after: { count: asns.length, teamId } });
+        return asns.map(a => a.id);
+      },
+
+      assignToTeam: (assignmentIds, teamId) => {
+        set({ assignments: get().assignments.map(a => assignmentIds.includes(a.id) ? { ...a, teamId } : a) });
+        get().log({ user: 'manager', action: `AssignToTeam:${teamId}`, before: null, after: { assignmentIds } });
+      },
+
+      startAssignment: (id) => {
+        set({ assignments: get().assignments.map(a => a.id === id ? { ...a, state: 'InProgress', startedAt: new Date().toISOString() } : a) });
+        get().log({ user: 'fabricator', action: `StartAssignment:${id}`, before: null, after: { state: 'InProgress' } });
+      },
+
+      completeStep: (id, stepKey, data) => {
+        const as = get().assignments.find(a => a.id === id); if (!as) return;
+        const steps = as.steps.map(s => s.key === stepKey ? { ...s, complete: true, data: { ...(s.data || {}), ...(data || {}) }, completedAt: new Date().toISOString() } : s);
+        const nextState = steps.every(s => s.complete) ? 'QA' : as.state;
+        set({ assignments: get().assignments.map(a => a.id === id ? { ...a, steps, state: nextState } : a) });
+        get().log({ user: 'fabricator', action: `CompleteStep:${id}:${stepKey}`, before: null, after: { data } });
+      },
+
+      pushToolEvent: (e) => {
+        const id = `TE-${String(get().audits.length + 1).padStart(5, '0')}`;
+        const ev: ToolEvent = { id, at: new Date().toISOString(), ...e };
+        set({ assignments: get().assignments.map(a => a.id === e.assignmentId ? { ...a, toolEvents: [...a.toolEvents, ev] } : a) });
+        get().log({ user: 'fabricator', action: `ToolEvent:${e.assignmentId}:${e.event}`, before: null, after: e });
+      },
+
+      finishAssignment: (id) => {
+        const as = get().assignments.find(a => a.id === id); if (!as) return;
+        const done = { ...as, state: 'Done' as const, finishedAt: new Date().toISOString() };
+        set({ assignments: get().assignments.map(a => a.id === id ? done : a) });
+        get().log({ user: 'fabricator', action: `FinishAssignment:${id}`, before: as, after: done });
       }
     }),
     { name: 'msuite-demo-db' }

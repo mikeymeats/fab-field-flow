@@ -1,4 +1,4 @@
-import { Home, Package, Calendar, Clipboard, Truck, BarChart3, Users, FolderOpen, Settings, Wrench, QrCode } from "lucide-react";
+import { Home, Package, Calendar, Clipboard, Truck, BarChart3, Users, FolderOpen, Settings, Wrench, QrCode, UserCog, HardHat } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useDB } from "@/store/db";
 import {
@@ -18,6 +18,8 @@ const projectItems = [
 
 const shopItems = [
   { title: "Dashboard", url: "/shop/dashboard", icon: Home },
+  { title: "Shop Manager Portal", url: "/shop/manager", icon: UserCog },
+  { title: "Team/Crew", url: "/shop/team", icon: HardHat },
   { title: "Hangers", url: "/shop/hangers", icon: Package },
   { title: "Packages", url: "/shop/packages", icon: Package },
   { title: "Scheduler", url: "/shop/scheduler", icon: Calendar },

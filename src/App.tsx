@@ -18,6 +18,9 @@ import Shipping from "@/pages/shop/Shipping";
 import Analytics from "@/pages/shop/Analytics";
 import ProjectsIndex from "@/pages/projects/Index";
 import ProjectDetail from "@/pages/projects/Detail";
+import ShopManager from "@/pages/shop/Manager";
+import TeamHome from "@/pages/shop/Team";
+import TaskRunner from "@/pages/shop/TaskRunner";
 import { bootstrapOnce } from "@/lib/bootstrap";
 
 const queryClient = new QueryClient();
@@ -63,6 +66,9 @@ const App = () => {
                   <Route path="/shop/qa" element={<QA />} />
                   <Route path="/shop/shipping" element={<Shipping />} />
                   <Route path="/shop/analytics" element={<Analytics />} />
+                  <Route path="/shop/manager" element={<ShopManager />} />
+                  <Route path="/shop/team" element={<TeamHome />} />
+                  <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
                   <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
                 </Routes>
               </main>
