@@ -285,6 +285,12 @@ type DB = {
   moveAssignmentToTeam: (assignmentId: string, teamId: string, order?: number) => void;
   expediteAssignment: (id: string, expedite: boolean) => void;
   
+  // Command Center Actions
+  updatePackage: (pkgId: string, patch: Partial<Package>) => void;
+  bulkAdvancePackages: (pkgIds: string[], next: string) => void;
+  setPackagePriority: (pkgId: string, priority: 'Low'|'Med'|'High') => void;
+  setPackageDue: (pkgId: string, dueISO: string) => void;
+  
   // Selectors
   scopedPackages: () => Package[];
   scopedHangers: () => Hanger[];
@@ -806,6 +812,27 @@ export const useDB = create<DB>()(
           ) 
         });
         get().log({ user: 'scheduler', action: `ExpediteAssignment:${id}`, before: null, after: { expedite } });
+      },
+      
+      // === COMMAND CENTER ACTIONS ===
+      updatePackage: (pkgId, patch) => {
+        set({ packages: get().packages.map(p => p.id === pkgId ? { ...p, ...patch } : p) });
+        get().log({ user: 'manager', action: `UpdatePackage:${pkgId}`, before: null, after: patch });
+      },
+      
+      bulkAdvancePackages: (pkgIds, next) => {
+        pkgIds.forEach(id => get().advancePackage(id, next));
+        get().log({ user: 'manager', action: `BulkAdvancePackages`, before: null, after: { pkgIds, state: next } });
+      },
+      
+      setPackagePriority: (pkgId, priority) => {
+        get().updatePackage(pkgId, { priority } as any);
+        get().log({ user: 'manager', action: `SetPackagePriority:${pkgId}`, before: null, after: { priority } });
+      },
+      
+      setPackageDue: (pkgId, dueISO) => {
+        get().updatePackage(pkgId, { due: dueISO } as any);
+        get().log({ user: 'manager', action: `SetPackageDue:${pkgId}`, before: null, after: { due: dueISO } });
       },
 
       scopedAssignments: () => {

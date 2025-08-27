@@ -13,7 +13,7 @@ export const nav: NavGroup[] = [
   {
     title: 'Shop Management',
     items: [
-      { label:'Shop Manager Portal', icon: Factory, to:'/shop/manager' },
+      { label:'Shop Command Center', icon: Factory, to:'/shop/command-center' },
       { label:'Team/Crew', icon: Users, to:'/shop/team' },
       { label:'Hangers', icon: Wrench, to:'/shop/hangers' },
       { label:'Packages', icon: Package, to:'/shop/packages' },

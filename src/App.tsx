@@ -19,7 +19,7 @@ import Shipping from "@/pages/shop/Shipping";
 import Analytics from "@/pages/shop/Analytics";
 import ProjectsIndex from "@/pages/projects/Index";
 import ProjectDetail from "@/pages/projects/Detail";
-import ShopManager from "@/pages/shop/Manager";
+import CommandCenter from "@/pages/shop/CommandCenter";
 import TeamHome from "@/pages/shop/Team";
 import TaskRunner from "@/pages/shop/TaskRunner";
 import InventoryIndex from "@/pages/inventory/Index";
@@ -121,7 +121,8 @@ const App = () => {
                 <Route path="/shop/qa" element={<QA />} />
                 <Route path="/shop/shipping" element={<Shipping />} />
                 <Route path="/shop/analytics" element={<Analytics />} />
-                <Route path="/shop/manager" element={<ShopManager />} />
+                 <Route path="/shop/command-center" element={<CommandCenter />} />
+                 <Route path="/shop/manager" element={<Navigate to="/shop/command-center" replace />} />
                 <Route path="/shop/team" element={<TeamHome />} />
                 <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
                 <Route path="/inventory" element={<InventoryIndex />} />
