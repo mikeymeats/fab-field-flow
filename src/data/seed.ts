@@ -139,10 +139,13 @@ export const seed: { projects: SeedProject[]; packages: SeedPackage[]; hangers: 
     { id:"PKG-105", projectId:"PRJ-002", name:"PKG L4-OFFICE", level:"L4", zone:"OFFICE", state:"Submitted", hangerIds:["HNG-2013","HNG-2014","HNG-2015"] },
     { id:"PKG-106", projectId:"PRJ-002", name:"PKG ROOF-MECH", level:"ROOF", zone:"MECH", state:"Submitted", hangerIds:["HNG-2016","HNG-2017","HNG-2018","HNG-2019","HNG-2020"] },
     
-    // Additional submitted packages for Riverview Medical Tower
+    // Additional submitted packages for Riverview Medical Tower - Need Shop Manager Review
     { id:"PKG-011", projectId:"PRJ-001", name:"PKG L1-EMERGENCY", level:"L1", zone:"ER", state:"Submitted", hangerIds:["HNG-1030","HNG-1031","HNG-1032"] },
     { id:"PKG-012", projectId:"PRJ-001", name:"PKG L2-PATIENT-EAST", level:"L2", zone:"EAST", state:"Submitted", hangerIds:["HNG-1033","HNG-1034","HNG-1035","HNG-1036"] },
     { id:"PKG-013", projectId:"PRJ-001", name:"PKG L3-SURGERY", level:"L3", zone:"SURG", state:"Submitted", hangerIds:["HNG-1037","HNG-1038","HNG-1039"] },
+    { id:"PKG-014", projectId:"PRJ-001", name:"PKG L4-ICU", level:"L4", zone:"ICU", state:"Submitted", hangerIds:["HNG-1040","HNG-1041","HNG-1042","HNG-1043"] },
+    { id:"PKG-015", projectId:"PRJ-001", name:"PKG L5-ADMIN", level:"L5", zone:"ADMIN", state:"Submitted", hangerIds:["HNG-1044","HNG-1045","HNG-1046"] },
+    { id:"PKG-016", projectId:"PRJ-001", name:"PKG ROOF-MECHANICAL", level:"ROOF", zone:"MECH", state:"Submitted", hangerIds:["HNG-1047","HNG-1048","HNG-1049","HNG-1050","HNG-1051"] },
     
     // PRJ-003 packages (Manufacturing Plant Expansion - Completed project)
     { id:"PKG-201", projectId:"PRJ-003", name:"PKG PROC-ZA", level:"L1", zone:"ZA", state:"Delivered", hangerIds:["HNG-3000","HNG-3001","HNG-3002"] },
