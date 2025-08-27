@@ -132,12 +132,17 @@ export const seed: { projects: SeedProject[]; packages: SeedPackage[]; hangers: 
     { id:"PKG-010", projectId:"PRJ-001", name:"PKG L1-LOBBY", level:"L1", zone:"LOBBY", state:"InFabrication", hangerIds:["HNG-1028","HNG-1029"] },
     
     // PRJ-002 packages (Downtown Office Complex Phase 2 - High-rise office building)
-    { id:"PKG-101", projectId:"PRJ-002", name:"PKG B1-PARKING", level:"B1", zone:"PARK", state:"Planned", hangerIds:["HNG-2000","HNG-2001","HNG-2002"] },
-    { id:"PKG-102", projectId:"PRJ-002", name:"PKG L1-RETAIL", level:"L1", zone:"RETAIL", state:"Planned", hangerIds:["HNG-2003","HNG-2004","HNG-2005"] },
+    { id:"PKG-101", projectId:"PRJ-002", name:"PKG B1-PARKING", level:"B1", zone:"PARK", state:"Submitted", hangerIds:["HNG-2000","HNG-2001","HNG-2002"] },
+    { id:"PKG-102", projectId:"PRJ-002", name:"PKG L1-RETAIL", level:"L1", zone:"RETAIL", state:"Submitted", hangerIds:["HNG-2003","HNG-2004","HNG-2005"] },
     { id:"PKG-103", projectId:"PRJ-002", name:"PKG L2-OFFICE", level:"L2", zone:"OFFICE", state:"Submitted", hangerIds:["HNG-2006","HNG-2007","HNG-2008","HNG-2009"] },
     { id:"PKG-104", projectId:"PRJ-002", name:"PKG L3-OFFICE", level:"L3", zone:"OFFICE", state:"Submitted", hangerIds:["HNG-2010","HNG-2011","HNG-2012"] },
     { id:"PKG-105", projectId:"PRJ-002", name:"PKG L4-OFFICE", level:"L4", zone:"OFFICE", state:"Submitted", hangerIds:["HNG-2013","HNG-2014","HNG-2015"] },
     { id:"PKG-106", projectId:"PRJ-002", name:"PKG ROOF-MECH", level:"ROOF", zone:"MECH", state:"Submitted", hangerIds:["HNG-2016","HNG-2017","HNG-2018","HNG-2019","HNG-2020"] },
+    
+    // Additional submitted packages for Riverview Medical Tower
+    { id:"PKG-011", projectId:"PRJ-001", name:"PKG L1-EMERGENCY", level:"L1", zone:"ER", state:"Submitted", hangerIds:["HNG-1030","HNG-1031","HNG-1032"] },
+    { id:"PKG-012", projectId:"PRJ-001", name:"PKG L2-PATIENT-EAST", level:"L2", zone:"EAST", state:"Submitted", hangerIds:["HNG-1033","HNG-1034","HNG-1035","HNG-1036"] },
+    { id:"PKG-013", projectId:"PRJ-001", name:"PKG L3-SURGERY", level:"L3", zone:"SURG", state:"Submitted", hangerIds:["HNG-1037","HNG-1038","HNG-1039"] },
     
     // PRJ-003 packages (Manufacturing Plant Expansion - Completed project)
     { id:"PKG-201", projectId:"PRJ-003", name:"PKG PROC-ZA", level:"L1", zone:"ZA", state:"Delivered", hangerIds:["HNG-3000","HNG-3001","HNG-3002"] },
