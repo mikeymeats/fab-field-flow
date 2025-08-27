@@ -181,13 +181,27 @@ export default function ProjectsIndex() {
         </Card>
       </div>
       
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all">All Projects ({projects.length})</TabsTrigger>
           <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
           <TabsTrigger value="inactive">Planning & Completed ({inactiveProjects.length})</TabsTrigger>
           <TabsTrigger value="archived">Archived ({archivedProjects.length})</TabsTrigger>
         </TabsList>
         
+        <TabsContent value="all" className="space-y-4">
+          <div className="grid gap-6">
+            {projects.map(project => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+            {projects.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No projects found.
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-6">
             {activeProjects.map(project => (
