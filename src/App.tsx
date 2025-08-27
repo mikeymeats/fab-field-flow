@@ -4,9 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { Header } from "@/components/Header";
 import { PersonaAuth } from "@/components/PersonaAuth";
 import { Dashboard } from "@/pages/shop/Dashboard";
 import { Hangers } from "@/pages/shop/Hangers";
@@ -20,11 +17,6 @@ import Analytics from "@/pages/shop/Analytics";
 import ProjectsIndex from "@/pages/projects/Index";
 import ProjectDetail from "@/pages/projects/Detail";
 import CommandCenter from "@/pages/shop/CommandCenter";
-import CommandCenterReview from "@/pages/shop/command-center/Review";
-import CommandCenterInventory from "@/pages/shop/command-center/Inventory";
-import CommandCenterAssignment from "@/pages/shop/command-center/Assignment";
-import CommandCenterExceptions from "@/pages/shop/command-center/Exceptions";
-import CommandCenterProduction from "@/pages/shop/command-center/Production";
 import TeamHome from "@/pages/shop/Team";
 import TaskRunner from "@/pages/shop/TaskRunner";
 import InventoryIndex from "@/pages/inventory/Index";
@@ -33,7 +25,7 @@ import ExecutiveAnalytics from "@/pages/analytics/Executive";
 import { bootstrapOnce } from "@/lib/bootstrap";
 import { useDB } from "@/store/db";
 import type { PersonaType } from "@/store/db";
-import { Sidebar } from "@/components/layout/Sidebar";
+import Sidebar from "@/components/layout/Sidebar";
 import Omnibar from "@/components/ui/Omnibar";
 import { Sun, Moon } from 'lucide-react';
 
@@ -100,19 +92,19 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-background text-foreground flex">
-          <Sidebar/>
+        <div className="flex min-h-screen w-full bg-neutral-900">
+          <Sidebar />
 
           <div className="flex-1 flex flex-col">
-            <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
-              <div className="font-semibold text-card-foreground">DEWALT • Hanger Fab & Field</div>
+            <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-4 bg-neutral-800">
+              <div className="font-semibold text-white">DEWALT • Hanger Fab & Field</div>
               <div className="flex items-center gap-3">
-                {active ? <span className="text-xs px-2 py-1 rounded bg-accent/10 border border-accent/20 text-accent-foreground">Scoped: {active.id}</span> : null}
+                {active ? <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 border border-yellow-500/30 text-yellow-300">Scoped: {active.id}</span> : null}
                 <ThemeToggle/>
               </div>
             </header>
 
-            <main className="flex-1 p-4 bg-background">
+            <main className="flex-1 bg-neutral-900 text-white">
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={<ProjectsIndex />} />
@@ -126,19 +118,23 @@ const App = () => {
                 <Route path="/shop/qa" element={<QA />} />
                 <Route path="/shop/shipping" element={<Shipping />} />
                 <Route path="/shop/analytics" element={<Analytics />} />
-                 <Route path="/shop/command-center" element={<CommandCenter />} />
-                 <Route path="/shop/command-center/review" element={<CommandCenterReview />} />
-                 <Route path="/shop/command-center/inventory" element={<CommandCenterInventory />} />
-                 <Route path="/shop/command-center/assignment" element={<CommandCenterAssignment />} />
-                 <Route path="/shop/command-center/exceptions" element={<CommandCenterExceptions />} />
-                 <Route path="/shop/command-center/production" element={<CommandCenterProduction />} />
+                <Route path="/shop/command-center" element={<CommandCenter />} />
                  <Route path="/shop/manager" element={<Navigate to="/shop/command-center" replace />} />
                 <Route path="/shop/team" element={<TeamHome />} />
                 <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
                 <Route path="/inventory" element={<InventoryIndex />} />
+                <Route path="/inventory/shortages" element={<div className="p-6 text-white">Inventory Shortages - Coming Soon</div>} />
                 <Route path="/field/receiving" element={<FieldReceiving />} />
+                <Route path="/field/crew" element={<div className="p-6 text-white">Field Crew Assignment - Coming Soon</div>} />
+                <Route path="/field/install" element={<div className="p-6 text-white">Install Board - Coming Soon</div>} />
+                <Route path="/field/qa" element={<div className="p-6 text-white">Field QA - Coming Soon</div>} />
+                <Route path="/field/analytics" element={<div className="p-6 text-white">Field Analytics - Coming Soon</div>} />
+                <Route path="/admin/settings" element={<div className="p-6 text-white">Admin Settings - Coming Soon</div>} />
+                <Route path="/admin/roles" element={<div className="p-6 text-white">Admin Roles - Coming Soon</div>} />
+                <Route path="/admin/templates" element={<div className="p-6 text-white">Admin Templates - Coming Soon</div>} />
+                <Route path="/admin/integrations" element={<div className="p-6 text-white">Admin Integrations - Coming Soon</div>} />
                 <Route path="/analytics/executive" element={<ExecutiveAnalytics />} />
-                <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
+                <Route path="*" element={<div className="text-center text-gray-400 p-6">Page under construction</div>} />
               </Routes>
             </main>
           </div>
