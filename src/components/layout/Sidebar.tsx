@@ -63,18 +63,18 @@ export default function Sidebar(){
     if (hasChildren) {
       return (
         <div key={item.label} className={paddingClass}>
-          <button
-            onClick={() => toggleExpanded(item.label)}
-            className="w-full px-3 py-2 rounded flex items-center justify-between hover:bg-white/5 transition-colors text-gray-200"
-          >
-            <div className="flex items-center gap-2">
-              <item.icon className="w-4 h-4 opacity-80" />
-              <span>{item.label}</span>
-            </div>
-            {isExpanded ? 
-              <ChevronDown className="h-4 w-4 opacity-60" /> : 
-              <ChevronRight className="h-4 w-4 opacity-60" />
-            }
+            <button
+              onClick={() => toggleExpanded(item.label)}
+              className="w-full px-3 py-2 rounded flex items-center justify-between hover:bg-sidebar-accent transition-colors text-sidebar-foreground"
+            >
+              <div className="flex items-center gap-2">
+                <item.icon className="w-4 h-4 opacity-80" />
+                <span>{item.label}</span>
+              </div>
+              {isExpanded ? 
+                <ChevronDown className="h-4 w-4 opacity-60" /> : 
+                <ChevronRight className="h-4 w-4 opacity-60" />
+              }
           </button>
           
           {isExpanded && (
@@ -91,8 +91,8 @@ export default function Sidebar(){
         key={item.label} 
         to={item.to}
         className={({ isActive }) => 
-          `px-3 py-2 rounded flex items-center gap-2 hover:bg-white/5 transition-colors text-gray-200 ${
-            isActive ? 'bg-white/10 text-white' : ''
+          `px-3 py-2 rounded flex items-center gap-2 hover:bg-sidebar-accent transition-colors text-sidebar-foreground ${
+            isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : ''
           } ${paddingClass}`
         }
       >
@@ -103,22 +103,22 @@ export default function Sidebar(){
   };
 
   return (
-    <aside className="w-68 min-w-64 max-w-72 border-r border-neutral-800 bg-neutral-900 p-3 space-y-4">
-      <div className="font-semibold text-white">MSUITE Fab & Field</div>
-      <div className="text-[11px] opacity-70 text-gray-300">Scope: {scopeLabel}</div>
+    <aside className="w-68 min-w-64 max-w-72 border-r border-sidebar-border bg-sidebar-background p-3 space-y-4">
+      <div className="font-semibold text-sidebar-foreground">MSUITE Fab & Field</div>
+      <div className="text-[11px] opacity-70 text-sidebar-foreground">Scope: {scopeLabel}</div>
       
       {currentUser && (
-        <div className="text-[10px] px-2 py-1 bg-neutral-800 rounded border border-neutral-700 text-gray-300">
+        <div className="text-[10px] px-2 py-1 bg-sidebar-accent rounded border border-sidebar-border text-sidebar-foreground">
           Role: {currentUser.persona.replace(/([A-Z])/g, ' $1').trim()}
         </div>
       )}
 
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 opacity-60 text-gray-400"/>
+        <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"/>
         <input 
           ref={inputRef} 
           placeholder="Search ( / )" 
-          className="w-full pl-7 pr-2 py-2 text-sm bg-transparent border border-neutral-700 rounded outline-none focus:border-neutral-500 text-white placeholder-gray-500"
+          className="w-full pl-7 pr-2 py-2 text-sm bg-sidebar-accent border border-sidebar-border rounded outline-none focus:border-sidebar-ring text-sidebar-foreground placeholder:text-muted-foreground"
         />
       </div>
 
@@ -128,7 +128,7 @@ export default function Sidebar(){
           
           return (
             <div key={group.title}>
-              <div className="text-[10px] uppercase opacity-60 mb-1 text-gray-400">{group.title}</div>
+              <div className="text-[10px] uppercase opacity-60 mb-1 text-muted-foreground">{group.title}</div>
               <div className="space-y-1">
                 {group.items.map((item) => renderNavItem(item))}
               </div>

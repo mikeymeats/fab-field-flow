@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useDB } from '@/store/db'
-import { Filter, Search, AlertTriangle } from 'lucide-react'
+import { Filter, Search, AlertTriangle, ChevronDown, X, Building2 } from 'lucide-react'
 import { PackageReviewPanel } from '@/components/shop/PackageReviewPanel'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Badge } from '@/components/ui/badge'
 
 export default function CommandCenterReview() {
   const {
@@ -103,33 +106,129 @@ export default function CommandCenterReview() {
     })
   }
 
+  const handleProjectToggle = (projectId: string) => {
+    if (projectId === '') {
+      // "All Projects" selected - clear filter
+      setProjectFilter([])
+    } else {
+      setProjectFilter(prev => 
+        prev.includes(projectId) 
+          ? prev.filter(id => id !== projectId)
+          : [...prev, projectId]
+      )
+    }
+  }
+
+  const removeProject = (projectId: string) => {
+    setProjectFilter(prev => prev.filter(id => id !== projectId))
+  }
+
+  const clearAllProjects = () => {
+    setProjectFilter([])
+  }
+
   return (
-    <div className="space-y-6 p-6 bg-neutral-900 min-h-screen text-white">
+    <div className="space-y-6 p-6 bg-background min-h-screen text-foreground">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Package Review</h1>
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             Review and approve packages for fabrication across all projects
           </p>
         </div>
         
-        {/* Project Filter */}
-        <div className="flex items-center gap-4">
-          <select
-            multiple
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(Array.from(e.target.selectedOptions, option => option.value))}
-            className="px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white text-sm min-w-48"
-          >
-            <option value="">All Projects</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
-          </select>
+        {/* Modern Project Filter */}
+        <div className="flex items-center gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="min-w-48 justify-between bg-card border-border text-card-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  {projectFilter.length === 0 
+                    ? "All Projects" 
+                    : `${projectFilter.length} Project${projectFilter.length !== 1 ? 's' : ''}`
+                  }
+                </div>
+                <ChevronDown className="w-4 h-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0 bg-popover border-border" align="end">
+              <div className="p-3 border-b border-border">
+                <h4 className="font-medium text-sm text-popover-foreground">Filter by Projects</h4>
+              </div>
+              <div className="p-2">
+                <div
+                  onClick={() => handleProjectToggle('')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors ${
+                    projectFilter.length === 0 
+                      ? 'bg-accent text-accent-foreground' 
+                      : 'hover:bg-accent/50 text-popover-foreground'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span className="font-medium">All Projects</span>
+                </div>
+                <div className="h-px bg-border my-2" />
+                {projects.map(project => (
+                  <div
+                    key={project.id}
+                    onClick={() => handleProjectToggle(project.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors ${
+                      projectFilter.includes(project.id)
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-accent/50 text-popover-foreground'
+                    }`}
+                  >
+                    <div className={`w-3 h-3 rounded border ${
+                      projectFilter.includes(project.id) 
+                        ? 'bg-primary border-primary' 
+                        : 'border-border'
+                    }`} />
+                    <span className="text-sm">{project.name}</span>
+                  </div>
+                ))}
+              </div>
+              {projectFilter.length > 0 && (
+                <div className="p-2 border-t border-border">
+                  <Button 
+                    onClick={clearAllProjects}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+          
+          {/* Selected Project Badges */}
           {projectFilter.length > 0 && (
-            <div className="text-sm text-gray-400">
-              Filtering {projectFilter.length} project{projectFilter.length !== 1 ? 's' : ''}
+            <div className="flex items-center gap-2 flex-wrap">
+              {projectFilter.map(projectId => {
+                const project = projects.find(p => p.id === projectId)
+                return project ? (
+                  <Badge 
+                    key={projectId} 
+                    variant="secondary" 
+                    className="gap-1 bg-secondary/50 text-secondary-foreground hover:bg-secondary"
+                  >
+                    <span className="text-xs">{project.name}</span>
+                    <X 
+                      className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeProject(projectId)
+                      }}
+                    />
+                  </Badge>
+                ) : null
+              })}
             </div>
           )}
         </div>
@@ -139,12 +238,12 @@ export default function CommandCenterReview() {
       <div className="grid lg:grid-cols-12 gap-6">
         {/* Package Queue - Left */}
         <div className="lg:col-span-4">
-          <div className="border border-neutral-700 rounded-xl bg-neutral-800">
+          <div className="border border-border rounded-xl bg-card">
             {/* Queue Header */}
-            <div className="p-4 border-b border-neutral-700">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Package Queue</h2>
-                <div className="text-sm text-gray-400">
+                <h2 className="font-semibold text-card-foreground">Package Queue</h2>
+                <div className="text-sm text-muted-foreground">
                   {filteredPackages.length} packages
                 </div>
               </div>
@@ -152,20 +251,20 @@ export default function CommandCenterReview() {
               {/* Filters */}
               <div className="space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Search packages..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-neutral-700 border border-neutral-600 rounded-lg text-white"
+                    className="w-full pl-10 pr-4 py-2 text-sm bg-input border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
                 
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-neutral-700 border border-neutral-600 rounded-lg text-white"
+                  className="w-full px-3 py-2 text-sm bg-input border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All States</option>
                   <option value="Submitted">Submitted</option>
@@ -186,8 +285,8 @@ export default function CommandCenterReview() {
                   <div
                     key={pkg.id}
                     onClick={() => setSelectedPackageId(pkg.id)}
-                    className={`p-4 border-b border-neutral-700 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-neutral-700' : 'hover:bg-neutral-750'
+                    className={`p-4 border-b border-border cursor-pointer transition-colors ${
+                      isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50 text-card-foreground'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -202,14 +301,14 @@ export default function CommandCenterReview() {
                       </span>
                     </div>
                     
-                    <div className="text-xs text-gray-400 mb-2">
+                    <div className="text-xs text-muted-foreground mb-2">
                       {pkg.id} • Level {pkg.level} / Zone {pkg.zone}
                     </div>
                     
                     <div className="flex items-center gap-2 text-xs">
                       <span>{pkg.hangerIds.length} hangers</span>
                       {hasShortages && (
-                        <span className="text-amber-400 flex items-center gap-1">
+                        <span className="text-destructive flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" />
                           Shortages
                         </span>
@@ -220,7 +319,7 @@ export default function CommandCenterReview() {
               })}
               
               {filteredPackages.length === 0 && (
-                <div className="p-8 text-center text-gray-400">
+                <div className="p-8 text-center text-muted-foreground">
                   <div className="text-sm">No packages match your filters</div>
                 </div>
               )}

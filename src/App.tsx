@@ -37,25 +37,39 @@ import { Sun, Moon } from 'lucide-react';
 const queryClient = new QueryClient();
 
 function ThemeToggle(){
+  const [isDark, setIsDark] = useState(false)
+  
   function toggle(){
     const d = document.documentElement
-    const isDark = d.classList.toggle('dark')
-    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    const newIsDark = d.classList.toggle('dark')
+    setIsDark(newIsDark)
+    localStorage.setItem('theme', newIsDark ? 'dark' : 'light')
   }
   
   // Initialize theme on component mount
   useEffect(() => {
     const theme = localStorage.getItem('theme')
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const shouldBeDark = theme === 'dark' || (!theme && systemDark)
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const shouldBeDark = theme === 'dark' || (!theme && prefersDark)
     
-    document.documentElement.classList.toggle('dark', shouldBeDark)
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark')
+      setIsDark(true)
+    } else {
+      document.documentElement.classList.remove('dark')
+      setIsDark(false)
+    }
   }, [])
-  
-  return <button onClick={toggle} title="Toggle theme" className="p-2 rounded-full hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-colors">
-    <Sun className="w-4 h-4 hidden dark:block"/><Moon className="w-4 h-4 block dark:hidden"/>
-    <span className="sr-only">Toggle theme</span>
-  </button>
+
+  return (
+    <button 
+      onClick={toggle}
+      className="p-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors border border-border bg-card text-card-foreground"
+      aria-label="Toggle theme"
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  )
 }
 
 const App = () => {
@@ -97,19 +111,19 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="flex min-h-screen w-full bg-neutral-900">
+        <div className="flex min-h-screen w-full bg-background">
           <Sidebar />
 
           <div className="flex-1 flex flex-col">
-            <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-4 bg-neutral-800">
-              <div className="font-semibold text-white">DEWALT • Hanger Fab & Field</div>
+            <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
+              <div className="font-semibold text-card-foreground">DEWALT • Hanger Fab & Field</div>
               <div className="flex items-center gap-3">
                 {active ? <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 border border-yellow-500/30 text-yellow-300">Scoped: {active.id}</span> : null}
                 <ThemeToggle/>
               </div>
             </header>
 
-            <main className="flex-1 bg-neutral-900 text-white">
+            <main className="flex-1 bg-background text-foreground">
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={<ProjectsIndex />} />
