@@ -9,6 +9,13 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { Dashboard } from "@/pages/shop/Dashboard";
 import { Hangers } from "@/pages/shop/Hangers";
+import Packages from "@/pages/shop/Packages";
+import Scheduler from "@/pages/shop/Scheduler";
+import WorkOrders from "@/pages/shop/WorkOrders";
+import Kitting from "@/pages/shop/Kitting";
+import QA from "@/pages/shop/QA";
+import Shipping from "@/pages/shop/Shipping";
+import Analytics from "@/pages/shop/Analytics";
 import { bootstrapOnce } from "@/lib/bootstrap";
 
 const queryClient = new QueryClient();
@@ -45,6 +52,13 @@ const App = () => {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/shop/dashboard" element={<Dashboard />} />
                   <Route path="/shop/hangers" element={<Hangers />} />
+                  <Route path="/shop/packages" element={<Packages />} />
+                  <Route path="/shop/scheduler" element={<Scheduler />} />
+                  <Route path="/shop/work-orders" element={<WorkOrders />} />
+                  <Route path="/shop/kitting" element={<Kitting />} />
+                  <Route path="/shop/qa" element={<QA />} />
+                  <Route path="/shop/shipping" element={<Shipping />} />
+                  <Route path="/shop/analytics" element={<Analytics />} />
                   <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
                 </Routes>
               </main>

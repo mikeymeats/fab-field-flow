@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDB } from "@/store/db";
+import { useDB, type WorkOrder } from "@/store/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +78,7 @@ export default function WorkOrders() {
   };
 
   const handleUpdateState = (workOrderId: string, newState: string) => {
-    updateWorkOrder(workOrderId, { state: newState });
+    updateWorkOrder(workOrderId, { state: newState as WorkOrder['state'] });
   };
 
   const formatDate = (dateString?: string) => {

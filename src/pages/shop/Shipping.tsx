@@ -30,7 +30,11 @@ export default function Shipping() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
-  const [shipmentStops, setShipmentStops] = useState([
+  const [shipmentStops, setShipmentStops] = useState<Array<{
+    location: string;
+    type: 'Shop' | 'Galvanizer' | 'Painter' | 'Site';
+    date: string;
+  }>>([
     { location: "Shop", type: "Shop" as const, date: new Date().toISOString().split('T')[0] }
   ]);
 

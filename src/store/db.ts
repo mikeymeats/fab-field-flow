@@ -86,9 +86,10 @@ type DB = {
   advancePackage: (pkgId: string, state: Package['state']) => void;
   setHangerState: (id: string, state: string) => void;
   createShipment: (pkgIds: string[], stops: Shipment['stops']) => string;
-  log: (e: Omit<Audit, 'id' | 'at'>) => void;
   updateWorkOrder: (id: string, updates: Partial<WorkOrder>) => void;
   deleteWorkOrder: (id: string) => void;
+  autoSchedule: () => void;
+  log: (e: Omit<Audit, 'id' | 'at'>) => void;
 };
 
 export const useDB = create<DB>()(
@@ -276,6 +277,23 @@ export const useDB = create<DB>()(
         const before = get().workOrders.find(wo => wo.id === id);
         set({ workOrders: get().workOrders.filter(wo => wo.id !== id) });
         get().log({ user: 'system', action: `DeleteWorkOrder:${id}`, before, after: null });
+      },
+
+      autoSchedule: () => {
+        const workOrders = get().workOrders;
+        const teams = ['Team A', 'Team B', 'Team C'];
+        const stations = ['Station 1', 'Station 2', 'Station 3', 'Station 4'];
+        
+        const scheduledWOs = workOrders.map((wo, index) => ({
+          ...wo,
+          team: teams[index % teams.length],
+          station: stations[index % stations.length],
+          due: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          updatedAt: new Date().toISOString()
+        }));
+
+        set({ workOrders: scheduledWOs });
+        get().log({ user: 'system', action: 'AutoSchedule', before: null, after: 'Completed' });
       },
 
       log: (e) =>
