@@ -18,7 +18,6 @@ export const nav: NavGroup[] = [
         icon: Factory, 
         children: [
           { label:'Package Review', icon: FileText, to:'/shop/command-center/review' },
-          { label:'Inventory Check', icon: Package, to:'/shop/command-center/inventory' },
           { label:'Crew Assignment', icon: UserCheck, to:'/shop/command-center/assignment' },
           { label:'Scheduler', icon: Calendar, to:'/shop/scheduler' },
           { label:'Exception Management', icon: AlertTriangle, to:'/shop/command-center/exceptions' },

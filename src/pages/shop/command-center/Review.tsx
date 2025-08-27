@@ -19,6 +19,7 @@ export default function CommandCenterReview() {
     checkInventoryForPackage,
     teams,
     updatePackage,
+    createException,
     log
   } = useDB()
 
@@ -95,67 +96,86 @@ export default function CommandCenterReview() {
     const hasShortages = inventoryCheck.some(line => line.shortfall > 0)
     
     if (hasShortages) {
-      // Show shortage details but allow approval with note
+      // Create exception for inventory shortage
       const shortageItems = inventoryCheck.filter(line => line.shortfall > 0)
       const shortageList = shortageItems.map(item => `${item.sku}: ${item.shortfall} ${item.uom}`).join(', ')
       
+      createException(
+        'InventoryShort',
+        pkg.id,
+        `Package ${pkg.name} approved with inventory shortages: ${shortageList}. Procurement needed.`,
+        'High'
+      )
+      
       toast({
         title: "Inventory Shortages Detected",
-        description: `Package approved with shortages: ${shortageList}. Purchase orders may be needed.`,
+        description: "Package approved with shortages. Exception created for tracking.",
         variant: "destructive"
       })
-
-      updatePackage(pkg.id, { 
-        state: 'ApprovedForFab',
-        inventoryShortages: shortageItems,
-        approvalNotes: `Approved with inventory shortages: ${shortageList}`
-      } as any)
     } else {
-      advancePackage(pkg.id, 'ApprovedForFab')
+      // Reserve inventory automatically when no shortages
+      reserveInventoryForPackage(pkg.id)
+      toast({
+        title: "Package Approved",
+        description: "Inventory reserved automatically. Package ready for assignment.",
+      })
     }
     
+    advancePackage(pkg.id, 'ApprovedForFab')
     log({
       user: 'shop-manager',
       action: `ApprovePackage:${pkg.id}`,
       before: { state: pkg.state },
-      after: { state: 'ApprovedForFab', hasShortages }
+      after: { state: 'ApprovedForFab', hasShortages, inventoryReserved: !hasShortages }
     })
   }
 
   const handleApproveAndAssign = (pkg: any) => {
-    // First approve the package
-    handleApprovePackage(pkg)
+    const inventoryCheck = checkInventoryForPackage(pkg.id)
+    const hasShortages = inventoryCheck.some(line => line.shortfall > 0)
+    const availableTeam = teams.find(team => team.members.length > 0) // Simplified - just find a team with members
     
-    // Simple auto-assignment logic - assign to first available team
-    // In a real system, this would consider team skills, capacity, zones, etc.
-    const availableTeam = teams[0] // Simplified for now
-    
-    if (availableTeam) {
-      // Advance to Kitted first, then assign
-      advancePackage(pkg.id, 'Kitted')
-      const assignmentIds = createAssignmentsFromPackage(pkg.id, availableTeam.id)
-      assignToTeam(assignmentIds, availableTeam.id)
-      advancePackage(pkg.id, 'InFabrication')
-      
+    if (hasShortages) {
       toast({
-        title: "Package Auto-Assigned",
-        description: `${pkg.name} approved and assigned to ${availableTeam.name}`,
-        variant: "default"
-      })
-
-      log({
-        user: 'shop-manager',
-        action: `AutoAssignPackage:${pkg.id}:${availableTeam.id}`,
-        before: { state: pkg.state },
-        after: { state: 'InFabrication', teamId: availableTeam.id, teamName: availableTeam.name }
-      })
-    } else {
-      toast({
-        title: "No Available Teams",
-        description: "Package approved but no teams available for assignment.",
+        title: "Cannot Auto-Assign",
+        description: "Package has inventory shortages. Resolve shortages before assignment.",
         variant: "destructive"
       })
+      handleApprovePackage(pkg) // This will create the exception
+      return
     }
+    
+    if (!availableTeam) {
+      toast({
+        title: "No Available Teams",
+        description: "All teams are at capacity. Package approved but not assigned.",
+        variant: "destructive"
+      })
+      handleApprovePackage(pkg)
+      return
+    }
+    
+    // Reserve inventory and approve
+    reserveInventoryForPackage(pkg.id)
+    advancePackage(pkg.id, 'ApprovedForFab')
+    
+    // Then advance to Kitted and assign
+    advancePackage(pkg.id, 'Kitted')
+    const assignmentIds = createAssignmentsFromPackage(pkg.id, availableTeam.id)
+    assignToTeam(assignmentIds, availableTeam.id)
+    advancePackage(pkg.id, 'InFabrication')
+    
+    toast({
+      title: "Package Auto-Assigned",
+      description: `Approved, inventory reserved, and assigned to ${availableTeam.name}.`,
+    })
+    
+    log({
+      user: 'shop-manager',
+      action: `AutoApproveAssignPackage:${pkg.id}:${availableTeam.id}`,
+      before: { state: pkg.state, teamId: null },
+      after: { state: 'InFabrication', teamId: availableTeam.id, inventoryReserved: true }
+    })
   }
 
   const handleRejectPackage = (pkg: any, reason: string) => {
