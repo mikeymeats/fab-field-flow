@@ -1,6 +1,6 @@
-import { LayoutGrid, Factory, Users, Wrench, Package, Boxes, ClipboardCheck, BadgeCheck, Truck, ScanLine, ListChecks, BarChart3, Settings } from 'lucide-react'
+import { LayoutGrid, Factory, Users, Wrench, Package, Boxes, ClipboardCheck, BadgeCheck, Truck, ScanLine, ListChecks, BarChart3, Settings, AlertTriangle, Activity, FileText, UserCheck } from 'lucide-react'
 
-export type NavItem = { label:string; to:string; icon:any }
+export type NavItem = { label:string; to?:string; icon:any; children?:NavItem[] }
 export type NavGroup = { title:string; items:NavItem[] }
 
 export const nav: NavGroup[] = [
@@ -13,7 +13,17 @@ export const nav: NavGroup[] = [
   {
     title: 'Shop Management',
     items: [
-      { label:'Shop Command Center', icon: Factory, to:'/shop/command-center' },
+      { 
+        label:'Shop Command Center', 
+        icon: Factory, 
+        children: [
+          { label:'Package Review', icon: FileText, to:'/shop/command-center/review' },
+          { label:'Inventory Check', icon: Package, to:'/shop/command-center/inventory' },
+          { label:'Crew Assignment', icon: UserCheck, to:'/shop/command-center/assignment' },
+          { label:'Exception Management', icon: AlertTriangle, to:'/shop/command-center/exceptions' },
+          { label:'Production Dashboard', icon: Activity, to:'/shop/command-center/production' }
+        ]
+      },
       { label:'Teams / My Work',     icon: Users,   to:'/shop/team' },
       { label:'Hangers',             icon: Wrench,  to:'/shop/hangers' },
       { label:'Packages',            icon: Package, to:'/shop/packages' },

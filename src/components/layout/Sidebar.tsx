@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom'
 import { nav } from '@/config/nav'
 import { useDB } from '@/store/db'
-import { useEffect, useRef } from 'react'
-import { Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Search, ChevronDown, ChevronRight } from 'lucide-react'
 
 export default function Sidebar(){
   const { activeProjectId, projects, currentUser } = useDB()
+  const [expandedItems, setExpandedItems] = useState<{[key: string]: boolean}>({
+    'Shop Command Center': true // Expand by default since user loves this feature
+  })
   
   // For now, using simple scope display - will enhance with multi-project later
   const scopeLabel = activeProjectId 
@@ -45,6 +48,60 @@ export default function Sidebar(){
     }
   };
 
+  const toggleExpanded = (itemLabel: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemLabel]: !prev[itemLabel]
+    }));
+  };
+
+  const renderNavItem = (item: any, depth = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems[item.label] || false;
+    const paddingClass = depth > 0 ? 'ml-4' : '';
+
+    if (hasChildren) {
+      return (
+        <div key={item.label} className={paddingClass}>
+          <button
+            onClick={() => toggleExpanded(item.label)}
+            className="w-full px-3 py-2 rounded flex items-center justify-between hover:bg-white/5 transition-colors text-gray-200"
+          >
+            <div className="flex items-center gap-2">
+              <item.icon className="w-4 h-4 opacity-80" />
+              <span>{item.label}</span>
+            </div>
+            {isExpanded ? 
+              <ChevronDown className="h-4 w-4 opacity-60" /> : 
+              <ChevronRight className="h-4 w-4 opacity-60" />
+            }
+          </button>
+          
+          {isExpanded && (
+            <div className="ml-4 mt-1 space-y-1">
+              {item.children.map((child: any) => renderNavItem(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <NavLink 
+        key={item.label} 
+        to={item.to}
+        className={({ isActive }) => 
+          `px-3 py-2 rounded flex items-center gap-2 hover:bg-white/5 transition-colors text-gray-200 ${
+            isActive ? 'bg-white/10 text-white' : ''
+          } ${paddingClass}`
+        }
+      >
+        <item.icon className="w-4 h-4 opacity-80" />
+        <span>{item.label}</span>
+      </NavLink>
+    );
+  };
+
   return (
     <aside className="w-68 min-w-64 max-w-72 border-r border-neutral-800 bg-neutral-900 p-3 space-y-4">
       <div className="font-semibold text-white">MSUITE Fab & Field</div>
@@ -72,13 +129,8 @@ export default function Sidebar(){
           return (
             <div key={group.title}>
               <div className="text-[10px] uppercase opacity-60 mb-1 text-gray-400">{group.title}</div>
-              <div className="grid gap-1">
-                {group.items.map(it=>(
-                  <NavLink key={it.label} to={it.to}
-                    className={({isActive})=>`px-3 py-2 rounded flex items-center gap-2 hover:bg-white/5 transition-colors text-gray-200 ${isActive?'bg-white/10 text-white':''}`}>
-                    <it.icon className="w-4 h-4 opacity-80"/><span>{it.label}</span>
-                  </NavLink>
-                ))}
+              <div className="space-y-1">
+                {group.items.map((item) => renderNavItem(item))}
               </div>
             </div>
           )
