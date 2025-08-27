@@ -173,6 +173,7 @@ export type Team = {
   name: string;
   stations: ('RodCut' | 'UnistrutCut' | 'Assembly' | 'ShopQA')[];
   members: { id: string; name: string; role?: string }[];
+  dailyHours?: number; // default 8 × members.length if missing
 };
 
 export type AssignmentStep = {
@@ -206,6 +207,9 @@ export type Assignment = {
   priority?: 'Low' | 'Med' | 'High'; 
   state: 'Queued' | 'InProgress' | 'Paused' | 'QA' | 'Done';
   steps: AssignmentStep[];
+  order?: number; // NEW: sort within team lane
+  eta?: string; // optional
+  expedite?: boolean; // NEW: pin to top
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
@@ -275,9 +279,16 @@ type DB = {
   createException: (type: Exception['type'], ref: string, description: string, severity: Exception['severity']) => string;
   resolveException: (id: string) => void;
   
+  // Scheduler Actions
+  setAssignmentOrder: (id: string, order: number) => void;
+  bulkSetAssignmentOrder: (ids: string[], orders: number[]) => void;
+  moveAssignmentToTeam: (assignmentId: string, teamId: string, order?: number) => void;
+  expediteAssignment: (id: string, expedite: boolean) => void;
+  
   // Selectors
   scopedPackages: () => Package[];
   scopedHangers: () => Hanger[];
+  scopedAssignments: () => Assignment[];
 };
 
 export const useDB = create<DB>()(
@@ -613,9 +624,9 @@ export const useDB = create<DB>()(
         if (get().teams.length) return;
         set({
           teams: [
-            { id: 'TEAM-A', name: 'Team Alpha', stations: ['RodCut', 'UnistrutCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-01', name: 'Sam' }, { id: 'U-02', name: 'Riley' }] },
-            { id: 'TEAM-B', name: 'Team Bravo', stations: ['RodCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-03', name: 'Drew' }] },
-            { id: 'TEAM-C', name: 'Team Charlie', stations: ['UnistrutCut', 'Assembly'], members: [{ id: 'U-04', name: 'Jordan' }] },
+            { id: 'TEAM-A', name: 'Team Alpha', stations: ['RodCut', 'UnistrutCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-01', name: 'Sam' }, { id: 'U-02', name: 'Riley' }], dailyHours: 16 },
+            { id: 'TEAM-B', name: 'Team Bravo', stations: ['RodCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-03', name: 'Drew' }], dailyHours: 8 },
+            { id: 'TEAM-C', name: 'Team Charlie', stations: ['UnistrutCut', 'Assembly'], members: [{ id: 'U-04', name: 'Jordan' }], dailyHours: 8 },
           ]
         });
       },
@@ -752,6 +763,54 @@ export const useDB = create<DB>()(
         const resolved = { ...exception, state: 'Resolved' as const, resolvedAt: new Date().toISOString() };
         set({ exceptions: get().exceptions.map(e => e.id === id ? resolved : e) });
         get().log({ user: 'system', action: `ResolveException:${id}`, before: exception, after: resolved });
+      },
+
+      // === SCHEDULER ACTIONS ===
+      setAssignmentOrder: (id, order) => {
+        set({ 
+          assignments: get().assignments.map(a => 
+            a.id === id ? { ...a, order } : a
+          ) 
+        });
+        get().log({ user: 'scheduler', action: `SetAssignmentOrder:${id}`, before: null, after: { order } });
+      },
+
+      bulkSetAssignmentOrder: (ids, orders) => {
+        set({ 
+          assignments: get().assignments.map(a => {
+            const index = ids.indexOf(a.id);
+            return index >= 0 ? { ...a, order: orders[index] } : a;
+          })
+        });
+        get().log({ user: 'scheduler', action: `BulkSetAssignmentOrder`, before: null, after: { ids, orders } });
+      },
+
+      moveAssignmentToTeam: (assignmentId, teamId, order) => {
+        const assignment = get().assignments.find(a => a.id === assignmentId);
+        if (!assignment) return;
+        
+        const updated = { 
+          ...assignment, 
+          teamId, 
+          order: order ?? Date.now() // default to timestamp for end-of-lane 
+        };
+        
+        set({ assignments: get().assignments.map(a => a.id === assignmentId ? updated : a) });
+        get().log({ user: 'scheduler', action: `MoveAssignmentToTeam:${assignmentId}:${teamId}`, before: assignment, after: updated });
+      },
+
+      expediteAssignment: (id, expedite) => {
+        set({ 
+          assignments: get().assignments.map(a => 
+            a.id === id ? { ...a, expedite } : a
+          ) 
+        });
+        get().log({ user: 'scheduler', action: `ExpediteAssignment:${id}`, before: null, after: { expedite } });
+      },
+
+      scopedAssignments: () => {
+        const pid = get().activeProjectId;
+        return pid ? get().assignments.filter(a => a.projectId === pid) : get().assignments;
       },
     }),
     { name: 'msuite-demo-db' }
