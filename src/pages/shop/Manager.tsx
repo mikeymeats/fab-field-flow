@@ -35,49 +35,48 @@ export default function ShopManager(){
 
   // --- UI helpers ---
   const Chip = ({children, tone}:{children:React.ReactNode; tone?:'ok'|'warn'|'muted'})=>{
-    const cls = tone==='ok' ? 'bg-emerald-600/20 text-emerald-300 border-emerald-700/40'
-      : tone==='warn' ? 'bg-amber-600/20 text-amber-300 border-amber-700/40'
-      : 'bg-white/10 text-neutral-200 border-white/10'
+    const cls = tone==='ok' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+      : tone==='warn' ? 'bg-destructive/20 text-destructive border-destructive/40'
+      : 'bg-muted text-muted-foreground border-border'
     return <span className={`text-xs px-2 py-1 border rounded ${cls}`}>{children}</span>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Shop Manager Portal</h1>
-        <div className="flex items-center gap-2 text-xs opacity-70">
+        <h1 className="text-xl font-semibold text-foreground">Shop Manager Portal</h1>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Filter className="w-4 h-4"/><span>Queue → Review → Actions → Assign</span>
         </div>
       </div>
 
-      {/* KPI strip */}
       <section className="grid md:grid-cols-4 gap-3">
-        <div className="border border-neutral-800 rounded-xl p-3">
-          <div className="text-xs opacity-70">Inbound Packages</div>
-          <div className="text-2xl font-semibold">{pkgs.length}</div>
+        <div className="border border-border rounded-xl p-3 bg-card">
+          <div className="text-xs text-muted-foreground">Inbound Packages</div>
+          <div className="text-2xl font-semibold text-card-foreground">{pkgs.length}</div>
         </div>
-        <div className="border border-neutral-800 rounded-xl p-3">
-          <div className="text-xs opacity-70">Ready to Reserve</div>
-          <div className="text-2xl font-semibold">{pkgs.filter(p=>p.state==='Planned').length}</div>
+        <div className="border border-border rounded-xl p-3 bg-card">
+          <div className="text-xs text-muted-foreground">Ready to Reserve</div>
+          <div className="text-2xl font-semibold text-card-foreground">{pkgs.filter(p=>p.state==='Planned').length}</div>
         </div>
-        <div className="border border-neutral-800 rounded-xl p-3">
-          <div className="text-xs opacity-70">Kitted</div>
-          <div className="text-2xl font-semibold">{pkgs.filter(p=>p.state==='Kitted').length}</div>
+        <div className="border border-border rounded-xl p-3 bg-card">
+          <div className="text-xs text-muted-foreground">Kitted</div>
+          <div className="text-2xl font-semibold text-card-foreground">{pkgs.filter(p=>p.state==='Kitted').length}</div>
         </div>
-        <div className="border border-neutral-800 rounded-xl p-3">
-          <div className="text-xs opacity-70">Ready to Ship</div>
-          <div className="text-2xl font-semibold">{pkgs.filter(p=>p.state==='ReadyToShip').length}</div>
+        <div className="border border-border rounded-xl p-3 bg-card">
+          <div className="text-xs text-muted-foreground">Ready to Ship</div>
+          <div className="text-2xl font-semibold text-card-foreground">{pkgs.filter(p=>p.state==='ReadyToShip').length}</div>
         </div>
       </section>
 
       <section className="grid lg:grid-cols-12 gap-4">
         {/* LEFT: Queue */}
-        <div className="lg:col-span-4 border border-neutral-800 rounded-xl overflow-hidden">
-          <div className="p-3 border-b border-neutral-800 flex items-center gap-2">
+        <div className="lg:col-span-4 border border-border rounded-xl overflow-hidden bg-card">
+          <div className="p-3 border-b border-border flex items-center gap-2">
             <input placeholder="Search packages…" value={q} onChange={e=>setQ(e.target.value)}
-              className="w-full bg-transparent border border-neutral-700 rounded px-2 py-2 text-sm"/>
+              className="w-full bg-muted border border-input rounded px-2 py-2 text-sm text-foreground placeholder:text-muted-foreground"/>
             <select value={sortBy} onChange={e=>setSortBy(e.target.value as SortKey)}
-              className="bg-transparent border border-neutral-700 rounded px-2 py-2 text-sm">
+              className="bg-muted border border-input rounded px-2 py-2 text-sm text-foreground">
               <option value="name">Sort: Name</option>
               <option value="level">Sort: Level</option>
               <option value="zone">Sort: Zone</option>
@@ -85,20 +84,20 @@ export default function ShopManager(){
               <option value="state">Sort: State</option>
             </select>
             <select value={stateFilter} onChange={e=>setStateFilter(e.target.value)}
-              className="bg-transparent border border-neutral-700 rounded px-2 py-2 text-sm">
+              className="bg-muted border border-input rounded px-2 py-2 text-sm text-foreground">
               {['All','Planned','Kitted','InFabrication','Assembled','ShopQA','ReadyToShip','InTransit'].map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="max-h-[60vh] overflow-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs opacity-70 sticky top-0 bg-neutral-950">
+              <thead className="text-left text-xs text-muted-foreground sticky top-0 bg-card">
                 <tr><th className="py-2 px-3">Package</th><th>Level</th><th>Zone</th><th>Hangers</th><th>State</th></tr>
               </thead>
               <tbody>
                 {filtered.map(p=>{
                   const selected = p.id===selectedPkgId
                   return (
-                    <tr key={p.id} className={`border-t border-neutral-800 hover:bg-white/5 cursor-pointer ${selected?'bg-white/5':''}`}
+                    <tr key={p.id} className={`border-t border-border hover:bg-accent/5 cursor-pointer ${selected?'bg-accent/10':''} text-card-foreground`}
                         onClick={()=>setPkg(p.id)}>
                       <td className="py-2 px-3">{p.name}</td>
                       <td>{p.level}</td>
@@ -114,53 +113,53 @@ export default function ShopManager(){
         </div>
 
         {/* CENTER: Review */}
-        <div className="lg:col-span-5 border border-neutral-800 rounded-xl overflow-hidden">
-          <div className="p-3 border-b border-neutral-800 font-medium flex items-center gap-2">
+        <div className="lg:col-span-5 border border-border rounded-xl overflow-hidden bg-card">
+          <div className="p-3 border-b border-border font-medium flex items-center gap-2 text-card-foreground">
             <ClipboardList className="w-4 h-4"/><span>Package Review</span>
-            <span className="ml-auto text-xs opacity-70">{pkg ? pkg.id : 'Select a package'}</span>
+            <span className="ml-auto text-xs text-muted-foreground">{pkg ? pkg.id : 'Select a package'}</span>
           </div>
           {!pkg ? (
-            <div className="p-6 text-sm opacity-70">Choose a package from the list to review details.</div>
+            <div className="p-6 text-sm text-muted-foreground">Choose a package from the list to review details.</div>
           ) : (
             <div className="p-3 space-y-4">
               {/* Tabs */}
               <div className="flex items-center gap-2 text-sm">
-                <button className="px-3 py-2 rounded bg-white/10 border border-white/10">Overview</button>
-                <button className="px-3 py-2 rounded hover:bg-white/5">Hangers</button>
-                <button className="px-3 py-2 rounded hover:bg-white/5">Inventory</button>
-                <button className="px-3 py-2 rounded hover:bg-white/5">Assignments</button>
-                <button className="px-3 py-2 rounded hover:bg-white/5">Audit</button>
+                <button className="px-3 py-2 rounded bg-accent/20 border border-accent/40 text-accent-foreground">Overview</button>
+                <button className="px-3 py-2 rounded hover:bg-accent/5 text-muted-foreground hover:text-card-foreground">Hangers</button>
+                <button className="px-3 py-2 rounded hover:bg-accent/5 text-muted-foreground hover:text-card-foreground">Inventory</button>
+                <button className="px-3 py-2 rounded hover:bg-accent/5 text-muted-foreground hover:text-card-foreground">Assignments</button>
+                <button className="px-3 py-2 rounded hover:bg-accent/5 text-muted-foreground hover:text-card-foreground">Audit</button>
               </div>
 
               {/* Overview pane */}
               <div className="grid sm:grid-cols-3 gap-3">
-                <div className="border border-neutral-800 rounded p-3">
-                  <div className="text-xs opacity-70">Level / Zone</div>
-                  <div className="text-lg">{pkg.level} / {pkg.zone}</div>
+                <div className="border border-border rounded p-3 bg-muted">
+                  <div className="text-xs text-muted-foreground">Level / Zone</div>
+                  <div className="text-lg text-card-foreground">{pkg.level} / {pkg.zone}</div>
                 </div>
-                <div className="border border-neutral-800 rounded p-3">
-                  <div className="text-xs opacity-70">Hangers</div>
-                  <div className="text-lg">{pkg.hangerIds.length}</div>
+                <div className="border border-border rounded p-3 bg-muted">
+                  <div className="text-xs text-muted-foreground">Hangers</div>
+                  <div className="text-lg text-card-foreground">{pkg.hangerIds.length}</div>
                 </div>
-                <div className="border border-neutral-800 rounded p-3">
-                  <div className="text-xs opacity-70">State</div>
+                <div className="border border-border rounded p-3 bg-muted">
+                  <div className="text-xs text-muted-foreground">State</div>
                   <div><Chip tone={pkg.state==='Planned'?'warn':'muted'}>{pkg.state}</Chip></div>
                 </div>
               </div>
 
               {/* Hangers table */}
-              <div className="border border-neutral-800 rounded">
-                <div className="p-2 border-b border-neutral-800 text-sm font-medium">Hangers</div>
+              <div className="border border-border rounded bg-muted">
+                <div className="p-2 border-b border-border text-sm font-medium text-card-foreground">Hangers</div>
                 <div className="max-h-56 overflow-auto">
                   <table className="w-full text-xs">
-                    <thead className="text-left opacity-70 sticky top-0 bg-neutral-950">
+                    <thead className="text-left text-muted-foreground sticky top-0 bg-muted">
                       <tr><th className="py-2 px-2">Hanger</th><th>Type</th><th>System</th><th>Level/Zone</th><th>Status</th></tr>
                     </thead>
                     <tbody>
                       {pkg.hangerIds.map(id=>{
                         const h = hangers.find(x=>x.id===id)!
                         return (
-                          <tr key={id} className="border-t border-neutral-800">
+                          <tr key={id} className="border-t border-border text-card-foreground">
                             <td className="py-2 px-2">{h.name}</td>
                             <td>{h.type}</td>
                             <td>{h.system}</td>
@@ -175,27 +174,27 @@ export default function ShopManager(){
               </div>
 
               {/* Inventory summary */}
-              <div className="border border-neutral-800 rounded">
-                <div className="p-2 border-b border-neutral-800 text-sm font-medium">Inventory Check</div>
+              <div className="border border-border rounded bg-muted">
+                <div className="p-2 border-b border-border text-sm font-medium text-card-foreground">Inventory Check</div>
                 <div className="max-h-56 overflow-auto">
                   <table className="w-full text-xs">
-                    <thead className="text-left opacity-70 sticky top-0 bg-neutral-950">
+                    <thead className="text-left text-muted-foreground sticky top-0 bg-muted">
                       <tr><th className="py-2 px-2">SKU</th><th>Desc</th><th className="text-right">Req</th><th className="text-right">OnHand</th><th className="text-right">Short</th></tr>
                     </thead>
                     <tbody>
                       {lines.map(l=>(
-                        <tr key={l.sku} className="border-t border-neutral-800">
+                        <tr key={l.sku} className="border-t border-border text-card-foreground">
                           <td className="py-2 px-2">{l.sku}</td>
                           <td>{l.desc}</td>
                           <td className="text-right">{l.required}</td>
                           <td className="text-right">{l.onHand}</td>
-                          <td className={`text-right ${l.shortfall>0?'text-amber-400':''}`}>{l.shortfall}</td>
+                          <td className={`text-right ${l.shortfall>0?'text-destructive':''}`}>{l.shortfall}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <div className="p-2 text-xs opacity-70">{hasShort ? <span className="text-amber-300 flex items-center gap-1"><AlertTriangle className="w-4 h-4"/> Shortages detected</span> : <span className="text-emerald-300 flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Sufficient inventory</span>}</div>
+                <div className="p-2 text-xs text-muted-foreground">{hasShort ? <span className="text-destructive flex items-center gap-1"><AlertTriangle className="w-4 h-4"/> Shortages detected</span> : <span className="text-emerald-300 flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Sufficient inventory</span>}</div>
               </div>
             </div>
           )}
@@ -204,15 +203,15 @@ export default function ShopManager(){
         {/* RIGHT: Sticky actions */}
         <div className="lg:col-span-3">
           <div className="sticky top-4 space-y-3">
-            <div className="border border-neutral-800 rounded-xl">
-              <div className="p-3 border-b border-neutral-800 font-medium flex items-center gap-2"><PackageCheck className="w-4 h-4"/><span>Actions</span></div>
+            <div className="border border-border rounded-xl bg-card">
+              <div className="p-3 border-b border-border font-medium flex items-center gap-2 text-card-foreground"><PackageCheck className="w-4 h-4"/><span>Actions</span></div>
               <div className="p-3 grid gap-2">
-                <button disabled={!pkg} className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20 disabled:opacity-40"
+                <button disabled={!pkg} className="px-3 py-2 rounded bg-accent/20 border border-accent/40 hover:bg-accent/30 disabled:opacity-40 disabled:cursor-not-allowed text-accent-foreground font-medium"
                   onClick={()=> pkg && reserveInventoryForPackage(pkg.id)}>
                   Reserve Inventory & Create Pick
                 </button>
 
-                <button disabled={!pkg} className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20 disabled:opacity-40"
+                <button disabled={!pkg} className="px-3 py-2 rounded bg-accent/20 border border-accent/40 hover:bg-accent/30 disabled:opacity-40 disabled:cursor-not-allowed text-accent-foreground font-medium"
                   onClick={()=>{
                     if(!pkg) return
                     // create & route to first team
@@ -224,7 +223,7 @@ export default function ShopManager(){
                   Create Assignments & Route
                 </button>
 
-                <button disabled={!pkg} className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20 disabled:opacity-40"
+                <button disabled={!pkg} className="px-3 py-2 rounded bg-muted border border-input hover:bg-accent/10 disabled:opacity-40 disabled:cursor-not-allowed text-card-foreground"
                   onClick={()=>{
                     if(!pkg) return
                     const short = lines.filter(x=>x.shortfall>0)
@@ -236,22 +235,22 @@ export default function ShopManager(){
                   <span className="inline-flex items-center gap-2"><Download className="w-4 h-4"/>Export Reorder CSV</span>
                 </button>
 
-                <button disabled={!pkg} className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20 disabled:opacity-40"
+                <button disabled={!pkg} className="px-3 py-2 rounded bg-muted border border-input hover:bg-accent/10 disabled:opacity-40 disabled:cursor-not-allowed text-card-foreground"
                   onClick={()=> pkg && advancePackage(pkg.id, 'ReadyToShip')}>
                   Advance State to ReadyToShip <ArrowRight className="w-4 h-4 inline ml-1"/>
                 </button>
 
-                <button disabled={!pkg} className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20 disabled:opacity-40">
+                <button disabled={!pkg} className="px-3 py-2 rounded bg-muted border border-input hover:bg-accent/10 disabled:opacity-40 disabled:cursor-not-allowed text-card-foreground">
                   Print Labels
                 </button>
               </div>
             </div>
 
-            <div className="border border-neutral-800 rounded-xl">
-              <div className="p-3 border-b border-neutral-800 font-medium flex items-center gap-2"><Users className="w-4 h-4"/><span>Teams</span></div>
-              <div className="p-3 text-sm opacity-80">
+            <div className="border border-border rounded-xl bg-card">
+              <div className="p-3 border-b border-border font-medium flex items-center gap-2 text-card-foreground"><Users className="w-4 h-4"/><span>Teams</span></div>
+              <div className="p-3 text-sm text-muted-foreground">
                 {teams.map(t=> <div key={t.id} className="flex items-center justify-between py-1">
-                  <span>{t.name}</span><span className="text-xs opacity-60">{t.stations.join(', ')}</span>
+                  <span className="text-card-foreground">{t.name}</span><span className="text-xs text-muted-foreground">{t.stations.join(', ')}</span>
                 </div>)}
               </div>
             </div>

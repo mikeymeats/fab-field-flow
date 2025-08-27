@@ -40,7 +40,17 @@ function ThemeToggle(){
     const isDark = d.classList.toggle('dark')
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }
-  return <button onClick={toggle} title="Toggle theme" className="p-2 rounded-full hover:bg-white/5">
+  
+  // Initialize theme on component mount
+  useEffect(() => {
+    const theme = localStorage.getItem('theme')
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const shouldBeDark = theme === 'dark' || (!theme && systemDark)
+    
+    document.documentElement.classList.toggle('dark', shouldBeDark)
+  }, [])
+  
+  return <button onClick={toggle} title="Toggle theme" className="p-2 rounded-full hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-colors">
     <Sun className="w-4 h-4 hidden dark:block"/><Moon className="w-4 h-4 block dark:hidden"/>
     <span className="sr-only">Toggle theme</span>
   </button>
@@ -85,19 +95,19 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-neutral-950 text-neutral-100 flex">
+        <div className="min-h-screen bg-background text-foreground flex">
           <Sidebar/>
 
           <div className="flex-1 flex flex-col">
-            <header className="h-14 border-b border-neutral-800 flex items-center justify-between px-4">
-              <div className="font-semibold">DEWALT • Hanger Fab & Field</div>
+            <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
+              <div className="font-semibold text-card-foreground">DEWALT • Hanger Fab & Field</div>
               <div className="flex items-center gap-3">
-                {active ? <span className="text-xs px-2 py-1 rounded bg-white/10 border border-white/10">Scoped: {active.id}</span> : null}
+                {active ? <span className="text-xs px-2 py-1 rounded bg-accent/10 border border-accent/20 text-accent-foreground">Scoped: {active.id}</span> : null}
                 <ThemeToggle/>
               </div>
             </header>
 
-            <main className="flex-1 p-4">
+            <main className="flex-1 p-4 bg-background">
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={<ProjectsIndex />} />
