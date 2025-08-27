@@ -1,4 +1,4 @@
-import { LayoutGrid, Factory, Users, Wrench, Package, Boxes, ClipboardCheck, BadgeCheck, Truck, ScanLine, ListChecks, BarChart3, Settings, AlertTriangle, Activity, FileText, UserCheck } from 'lucide-react'
+import { LayoutGrid, Factory, Users, Wrench, Package, Boxes, ClipboardCheck, BadgeCheck, Truck, ScanLine, ListChecks, BarChart3, Settings, AlertTriangle, Activity, FileText, UserCheck, Calendar } from 'lucide-react'
 
 export type NavItem = { label:string; to?:string; icon:any; children?:NavItem[] }
 export type NavGroup = { title:string; items:NavItem[] }
@@ -20,6 +20,7 @@ export const nav: NavGroup[] = [
           { label:'Package Review', icon: FileText, to:'/shop/command-center/review' },
           { label:'Inventory Check', icon: Package, to:'/shop/command-center/inventory' },
           { label:'Crew Assignment', icon: UserCheck, to:'/shop/command-center/assignment' },
+          { label:'Scheduler', icon: Calendar, to:'/shop/scheduler' },
           { label:'Exception Management', icon: AlertTriangle, to:'/shop/command-center/exceptions' },
           { label:'Production Dashboard', icon: Activity, to:'/shop/command-center/production' }
         ]
@@ -27,7 +28,6 @@ export const nav: NavGroup[] = [
       { label:'Teams / My Work',     icon: Users,   to:'/shop/team' },
       { label:'Hangers',             icon: Wrench,  to:'/shop/hangers' },
       { label:'Packages',            icon: Package, to:'/shop/packages' },
-      { label:'Scheduler',           icon: Boxes,   to:'/shop/scheduler' },
       { label:'Work Orders',         icon: ClipboardCheck, to:'/shop/work-orders' },
       { label:'Kitting',             icon: Boxes,   to:'/shop/kitting' },
       { label:'Shop QA',             icon: BadgeCheck, to:'/shop/qa' },

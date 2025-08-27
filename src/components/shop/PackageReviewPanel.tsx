@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, AlertTriangle, Package, Wrench, ClipboardList } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Package, Wrench, ClipboardList, Zap } from 'lucide-react'
 import type { Package as PackageType, Hanger } from '@/store/db'
 
 interface PackageReviewPanelProps {
@@ -7,6 +7,7 @@ interface PackageReviewPanelProps {
   hangers: Hanger[]
   inventoryLines: any[]
   onApprove: (pkg: PackageType) => void
+  onApproveAndAssign?: (pkg: PackageType) => void
   onReject: (pkg: PackageType, reason: string) => void
 }
 
@@ -15,6 +16,7 @@ export function PackageReviewPanel({
   hangers, 
   inventoryLines, 
   onApprove, 
+  onApproveAndAssign,
   onReject 
 }: PackageReviewPanelProps) {
   const [activeTab, setActiveTab] = useState('overview')
@@ -235,16 +237,27 @@ export function PackageReviewPanel({
               >
                 Reject
               </button>
+              
+              {/* Auto-assign button */}
+              {onApproveAndAssign && !hasShortages && (
+                <button
+                  onClick={() => onApproveAndAssign(pkg)}
+                  className="px-4 py-2 text-sm bg-primary/80 text-primary-foreground hover:bg-primary rounded transition-colors flex items-center gap-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  Approve & Auto-assign
+                </button>
+              )}
+              
               <button
                 onClick={() => onApprove(pkg)}
-                disabled={hasShortages}
                 className={`px-4 py-2 text-sm rounded transition-colors ${
                   hasShortages
-                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                     : 'bg-primary text-primary-foreground hover:bg-primary/90'
                 }`}
               >
-                {hasShortages ? 'Resolve Shortages First' : 'Approve for Fabrication'}
+                {hasShortages ? 'Approve with Shortages' : 'Approve for Fabrication'}
               </button>
             </>
           )}

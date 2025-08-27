@@ -1,21 +1,28 @@
 import { useMemo, useState } from 'react'
 import { useDB } from '@/store/db'
-import { Filter, Search, AlertTriangle, ChevronDown, X, Building2 } from 'lucide-react'
+import { Filter, Search, AlertTriangle, ChevronDown, X, Building2, Zap } from 'lucide-react'
 import { PackageReviewPanel } from '@/components/shop/PackageReviewPanel'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 
 export default function CommandCenterReview() {
   const {
     shopPackages,
     shopHangers,
     projects,
-    checkInventoryForPackage,
+    reserveInventoryForPackage,
+    createAssignmentsFromPackage,
+    assignToTeam,
     advancePackage,
+    checkInventoryForPackage,
+    teams,
     updatePackage,
     log
   } = useDB()
+
+  const { toast } = useToast()
 
   // State
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
@@ -84,13 +91,71 @@ export default function CommandCenterReview() {
 
   // Handlers
   const handleApprovePackage = (pkg: any) => {
-    advancePackage(pkg.id, 'ApprovedForFab')
+    const inventoryCheck = checkInventoryForPackage(pkg.id)
+    const hasShortages = inventoryCheck.some(line => line.shortfall > 0)
+    
+    if (hasShortages) {
+      // Show shortage details but allow approval with note
+      const shortageItems = inventoryCheck.filter(line => line.shortfall > 0)
+      const shortageList = shortageItems.map(item => `${item.sku}: ${item.shortfall} ${item.uom}`).join(', ')
+      
+      toast({
+        title: "Inventory Shortages Detected",
+        description: `Package approved with shortages: ${shortageList}. Purchase orders may be needed.`,
+        variant: "destructive"
+      })
+
+      updatePackage(pkg.id, { 
+        state: 'ApprovedForFab',
+        inventoryShortages: shortageItems,
+        approvalNotes: `Approved with inventory shortages: ${shortageList}`
+      } as any)
+    } else {
+      advancePackage(pkg.id, 'ApprovedForFab')
+    }
+    
     log({
       user: 'shop-manager',
       action: `ApprovePackage:${pkg.id}`,
       before: { state: pkg.state },
-      after: { state: 'ApprovedForFab' }
+      after: { state: 'ApprovedForFab', hasShortages }
     })
+  }
+
+  const handleApproveAndAssign = (pkg: any) => {
+    // First approve the package
+    handleApprovePackage(pkg)
+    
+    // Simple auto-assignment logic - assign to first available team
+    // In a real system, this would consider team skills, capacity, zones, etc.
+    const availableTeam = teams[0] // Simplified for now
+    
+    if (availableTeam) {
+      // Advance to Kitted first, then assign
+      advancePackage(pkg.id, 'Kitted')
+      const assignmentIds = createAssignmentsFromPackage(pkg.id, availableTeam.id)
+      assignToTeam(assignmentIds, availableTeam.id)
+      advancePackage(pkg.id, 'InFabrication')
+      
+      toast({
+        title: "Package Auto-Assigned",
+        description: `${pkg.name} approved and assigned to ${availableTeam.name}`,
+        variant: "default"
+      })
+
+      log({
+        user: 'shop-manager',
+        action: `AutoAssignPackage:${pkg.id}:${availableTeam.id}`,
+        before: { state: pkg.state },
+        after: { state: 'InFabrication', teamId: availableTeam.id, teamName: availableTeam.name }
+      })
+    } else {
+      toast({
+        title: "No Available Teams",
+        description: "Package approved but no teams available for assignment.",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleRejectPackage = (pkg: any, reason: string) => {
@@ -334,6 +399,7 @@ export default function CommandCenterReview() {
             hangers={hangers}
             inventoryLines={inventoryLines}
             onApprove={handleApprovePackage}
+            onApproveAndAssign={handleApproveAndAssign}
             onReject={handleRejectPackage}
           />
         </div>
