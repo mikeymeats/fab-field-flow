@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,7 +29,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    bootstrapOnce().finally(() => setIsLoading(false));
+    bootstrapOnce();
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {
@@ -46,38 +47,36 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <SidebarProvider>
-          <div className="min-h-screen flex w-full bg-background">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <main className="flex-1 p-6">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/projects" replace />} />
-                  <Route path="/projects" element={<ProjectsIndex />} />
-                  <Route path="/projects/:projectId" element={<ProjectDetail />} />
-                  <Route path="/shop/dashboard" element={<Dashboard />} />
-                  <Route path="/shop/hangers" element={<Hangers />} />
-                  <Route path="/shop/packages" element={<Packages />} />
-                  <Route path="/shop/scheduler" element={<Scheduler />} />
-                  <Route path="/shop/work-orders" element={<WorkOrders />} />
-                  <Route path="/shop/kitting" element={<Kitting />} />
-                  <Route path="/shop/qa" element={<QA />} />
-                  <Route path="/shop/shipping" element={<Shipping />} />
-                  <Route path="/shop/analytics" element={<Analytics />} />
-                  <Route path="/shop/manager" element={<ShopManager />} />
-                  <Route path="/shop/team" element={<TeamHome />} />
-                  <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
-                  <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
-                </Routes>
-              </main>
-            </div>
+        <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col">
+            <Header />
+            <main className="flex-1 p-6">
+              <Routes>
+                <Route path="/" element={<Navigate to="/projects" replace />} />
+                <Route path="/projects" element={<ProjectsIndex />} />
+                <Route path="/projects/:projectId" element={<ProjectDetail />} />
+                <Route path="/shop/dashboard" element={<Dashboard />} />
+                <Route path="/shop/hangers" element={<Hangers />} />
+                <Route path="/shop/packages" element={<Packages />} />
+                <Route path="/shop/scheduler" element={<Scheduler />} />
+                <Route path="/shop/work-orders" element={<WorkOrders />} />
+                <Route path="/shop/kitting" element={<Kitting />} />
+                <Route path="/shop/qa" element={<QA />} />
+                <Route path="/shop/shipping" element={<Shipping />} />
+                <Route path="/shop/analytics" element={<Analytics />} />
+                <Route path="/shop/manager" element={<ShopManager />} />
+                <Route path="/shop/team" element={<TeamHome />} />
+                <Route path="/shop/task/:assignmentId" element={<TaskRunner />} />
+                <Route path="*" element={<div className="text-center text-muted-foreground">Page under construction</div>} />
+              </Routes>
+            </main>
           </div>
-        </SidebarProvider>
-        </BrowserRouter>
-        <Toaster />
-        <Sonner />
+        </div>
+      </SidebarProvider>
+      <Toaster />
+      <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );

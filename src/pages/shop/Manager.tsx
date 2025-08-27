@@ -157,16 +157,17 @@ export default function ShopManager() {
                 <select 
                   className="bg-transparent border border-neutral-700 rounded px-2 py-2"
                   defaultValue={teams[0]?.id}
-                  onChange={(e) => (e.target as any)._sel = e.target.value}
+                  id="teamSelector"
                 >
                   {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
                 <button 
                   className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/20" 
                   onClick={(ev: any) => {
-                    const teamId = (ev.target.previousSibling as any)._sel || teams[0]?.id;
-                    const ids = useDB.getState().createAssignmentsFromPackage(pkg.id, teamId);
-                    useDB.getState().assignToTeam(ids, teamId!);
+                    const select = ev.target.previousElementSibling as HTMLSelectElement;
+                    const teamId = select?.value || teams[0]?.id;
+                    const ids = createAssignmentsFromPackage(pkg.id, teamId);
+                    assignToTeam(ids, teamId!);
                     alert(`Created ${ids.length} assignments routed to ${teamId}`);
                   }}
                 >
