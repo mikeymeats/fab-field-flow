@@ -33,11 +33,25 @@ export function PackagePipelineCard({
 
   const statusColors = {
     Draft: 'bg-muted text-muted-foreground',
+    Planned: 'bg-muted text-muted-foreground',
+    Submitted: 'bg-yellow-500/20 text-yellow-400',
     Approved: 'bg-blue-500/20 text-blue-400',
+    Kitted: 'bg-cyan-500/20 text-cyan-400',
+    InFabrication: 'bg-blue-600/20 text-blue-400',
+    Fabrication: 'bg-blue-600/20 text-blue-400',
     InProduction: 'bg-orange-500/20 text-orange-400',
+    Assembled: 'bg-indigo-500/20 text-indigo-400',
     QA: 'bg-purple-500/20 text-purple-400',
+    Inspection: 'bg-purple-600/20 text-purple-400',
+    ShopQAPassed: 'bg-green-600/20 text-green-400',
+    Kitting: 'bg-teal-500/20 text-teal-400',
+    Packaging: 'bg-green-500/20 text-green-400',
     ReadyToShip: 'bg-green-500/20 text-green-400',
+    Staged: 'bg-emerald-500/20 text-emerald-400',
+    Shipping: 'bg-orange-600/20 text-orange-400',
     Shipped: 'bg-emerald-500/20 text-emerald-400',
+    Delivered: 'bg-emerald-700/20 text-emerald-400',
+    OnHold: 'bg-red-500/20 text-red-400',
   };
 
   const getTimeInStage = () => {
@@ -94,7 +108,9 @@ export function PackagePipelineCard({
         <div>
           <div className="font-medium text-sm text-foreground">{pkg.id}</div>
           <div className="text-xs text-muted-foreground">
-            Status: {pkg.state}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[pkg.state as keyof typeof statusColors] || 'bg-muted text-muted-foreground'}`}>
+              {pkg.state}
+            </span>
           </div>
         </div>
         {simulatedPriority === 'High' && (

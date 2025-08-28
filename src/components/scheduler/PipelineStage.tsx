@@ -4,7 +4,7 @@ import type { Package } from '@/store/db';
 import { PackagePipelineCard } from './PackagePipelineCard';
 
 interface PipelineStageProps {
-  stage: 'fabrication' | 'qa' | 'packaging' | 'shipping';
+  stage: 'approved' | 'fabrication' | 'qa' | 'packaging' | 'shipping';
   title: string;
   packages: Package[];
   metrics: {
@@ -43,6 +43,7 @@ export function PipelineStage({
   }));
 
   const stageColors = {
+    approved: 'border-muted-foreground/30 bg-muted/10',
     fabrication: 'border-blue-500/30 bg-blue-500/10',
     qa: 'border-purple-500/30 bg-purple-500/10',
     packaging: 'border-green-500/30 bg-green-500/10',
@@ -51,6 +52,7 @@ export function PipelineStage({
 
   const getStageIcon = () => {
     switch (stage) {
+      case 'approved': return '✅';
       case 'fabrication': return '🔧';
       case 'qa': return '🔍';
       case 'packaging': return '📦';

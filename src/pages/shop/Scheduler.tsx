@@ -64,13 +64,24 @@ export default function Scheduler() {
     });
   }, [packages, filters]);
 
-  // Group packages by production stage
+  // Group packages by production stage - Enhanced 5-stage pipeline
   const packagesByStage = useMemo(() => {
     const stages = {
-      fabrication: filteredPackages.filter(p => p.state === 'Fabrication' || p.state === 'InProduction'),
-      qa: filteredPackages.filter(p => p.state === 'QA' || p.state === 'Inspection'),
-      packaging: filteredPackages.filter(p => p.state === 'Packaging' || p.state === 'Kitting'),
-      shipping: filteredPackages.filter(p => p.state === 'Shipping' || p.state === 'Shipped'),
+      approved: filteredPackages.filter(p => 
+        p.state === 'Submitted' || p.state === 'Approved' || p.state === 'Planned'
+      ),
+      fabrication: filteredPackages.filter(p => 
+        p.state === 'Fabrication' || p.state === 'InProduction' || p.state === 'InFabrication' || p.state === 'Kitted'
+      ),
+      qa: filteredPackages.filter(p => 
+        p.state === 'QA' || p.state === 'Inspection' || p.state === 'Assembled' || p.state === 'ShopQAPassed'
+      ),
+      packaging: filteredPackages.filter(p => 
+        p.state === 'Packaging' || p.state === 'Kitting' || p.state === 'ReadyToShip' || p.state === 'Staged'
+      ),
+      shipping: filteredPackages.filter(p => 
+        p.state === 'Shipping' || p.state === 'Shipped' || p.state === 'Delivered'
+      ),
     };
 
     return stages;
@@ -90,6 +101,7 @@ export default function Scheduler() {
     });
 
     return {
+      approved: calculateMetrics(packagesByStage.approved),
       fabrication: calculateMetrics(packagesByStage.fabrication),
       qa: calculateMetrics(packagesByStage.qa),
       packaging: calculateMetrics(packagesByStage.packaging),
@@ -99,6 +111,7 @@ export default function Scheduler() {
 
   const handleMovePackage = (packageId: string, toStage: string) => {
     const stateMapping = {
+      approved: 'Approved' as const,
       fabrication: 'Fabrication' as const,
       qa: 'QA' as const,
       packaging: 'Packaging' as const,
@@ -113,6 +126,7 @@ export default function Scheduler() {
 
   const handleBulkMove = (packageIds: string[], toStage: string) => {
     const stateMapping = {
+      approved: 'Approved' as const,
       fabrication: 'Fabrication' as const,
       qa: 'QA' as const,
       packaging: 'Packaging' as const,
@@ -289,8 +303,18 @@ export default function Scheduler() {
               {/* Stage Metrics */}
               <StageMetricsPanel packages={filteredPackages} />
 
-              {/* Pipeline Stages */}
-              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              {/* Pipeline Stages - Enhanced 5-Stage Pipeline */}
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+                <PipelineStage
+                  stage="approved"
+                  title="Ready to Start"
+                  packages={packagesByStage.approved}
+                  metrics={stageMetrics.approved}
+                  onMovePackage={handleMovePackage}
+                  selectedPackages={selectedPackages}
+                  onToggleSelection={togglePackageSelection}
+                  showCriticalPath={filters.showCriticalPath}
+                />
                 <PipelineStage
                   stage="fabrication"
                   title="Fabrication"

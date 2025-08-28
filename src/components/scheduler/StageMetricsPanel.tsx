@@ -6,16 +6,23 @@ interface StageMetricsPanelProps {
 }
 
 export function StageMetricsPanel({ packages }: StageMetricsPanelProps) {
-  // Calculate metrics for each stage
+  // Calculate metrics for each stage - Enhanced 5-stage pipeline
   const getStageMetrics = () => {
     const stages = {
-      fabrication: packages.filter(p => p.state === 'Fabrication' || p.state === 'InProduction'),
-      qa: packages.filter(p => p.state === 'QA' || p.state === 'Inspection'),
-      packaging: packages.filter(p => p.state === 'Packaging' || p.state === 'Kitting'),
-      shipping: packages.filter(p => p.state === 'Shipping' || p.state === 'Shipped'),
+      approved: packages.filter(p => p.state === 'Submitted' || p.state === 'Approved' || p.state === 'Planned'),
+      fabrication: packages.filter(p => p.state === 'Fabrication' || p.state === 'InProduction' || p.state === 'InFabrication' || p.state === 'Kitted'),
+      qa: packages.filter(p => p.state === 'QA' || p.state === 'Inspection' || p.state === 'Assembled' || p.state === 'ShopQAPassed'),
+      packaging: packages.filter(p => p.state === 'Packaging' || p.state === 'Kitting' || p.state === 'ReadyToShip' || p.state === 'Staged'),
+      shipping: packages.filter(p => p.state === 'Shipping' || p.state === 'Shipped' || p.state === 'Delivered'),
     };
 
     return {
+      approved: {
+        count: stages.approved.length,
+        avgTime: calculateAvgTimeInStage(stages.approved),
+        bottleneck: stages.approved.length > 15,
+        throughput: calculateThroughput(stages.approved),
+      },
       fabrication: {
         count: stages.fabrication.length,
         avgTime: calculateAvgTimeInStage(stages.fabrication),
@@ -57,6 +64,15 @@ export function StageMetricsPanel({ packages }: StageMetricsPanelProps) {
   const metrics = getStageMetrics();
 
   const metricCards = [
+    {
+      title: 'Ready to Start',
+      icon: Clock,
+      count: metrics.approved.count,
+      avgTime: metrics.approved.avgTime,
+      throughput: metrics.approved.throughput,
+      bottleneck: metrics.approved.bottleneck,
+      color: 'gray',
+    },
     {
       title: 'Fabrication',
       icon: PackageIcon,
@@ -101,6 +117,7 @@ export function StageMetricsPanel({ packages }: StageMetricsPanelProps) {
     }
 
     switch (color) {
+      case 'gray': return 'border-muted-foreground/30 bg-muted/10 text-muted-foreground';
       case 'blue': return 'border-blue-500/30 bg-blue-500/10 text-blue-400';
       case 'purple': return 'border-purple-500/30 bg-purple-500/10 text-purple-400';
       case 'green': return 'border-green-500/30 bg-green-500/10 text-green-400';
@@ -110,7 +127,7 @@ export function StageMetricsPanel({ packages }: StageMetricsPanelProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
       {metricCards.map((card) => (
         <div
           key={card.title}

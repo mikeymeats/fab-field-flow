@@ -346,7 +346,7 @@ export const useDB = create<DB>()(
           assignedZones: ['D']
         }
       ],
-      activeProjectId: null,
+      activeProjectId: "PRJ-001", // Default to Riverview Medical Tower for demo
 
       hydrate: (projects, packages, hangers) => set({ projects, packages, hangers }),
       setActiveProject: (id) => set({ activeProjectId: id }),
