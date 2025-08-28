@@ -635,14 +635,177 @@ export const useDB = create<DB>()(
       },
 
       ensureTeamSeeds: () => {
-        if (get().teams.length) return;
-        set({
-          teams: [
-            { id: 'TEAM-A', name: 'Team Alpha', stations: ['RodCut', 'UnistrutCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-01', name: 'Sam' }, { id: 'U-02', name: 'Riley' }], dailyHours: 16 },
-            { id: 'TEAM-B', name: 'Team Bravo', stations: ['RodCut', 'Assembly', 'ShopQA'], members: [{ id: 'U-03', name: 'Drew' }], dailyHours: 8 },
-            { id: 'TEAM-C', name: 'Team Charlie', stations: ['UnistrutCut', 'Assembly'], members: [{ id: 'U-04', name: 'Jordan' }], dailyHours: 8 },
-          ]
-        });
+        const current = get().teams;
+        if (current.length === 0) {
+          const now = new Date().toISOString();
+          set({
+            teams: [
+              {
+                id: 'team-fab-a',
+                name: 'Fabrication Team A',
+                stations: ['RodCut', 'UnistrutCut', 'Assembly'],
+                members: [
+                  { id: 'fab-a-1', name: 'Mike Rodriguez', role: 'Lead' },
+                  { id: 'fab-a-2', name: 'Sarah Chen', role: 'Assembler' },
+                  { id: 'fab-a-3', name: 'David Kim', role: 'Cutter' }
+                ],
+                dailyHours: 24
+              },
+              {
+                id: 'team-fab-b',
+                name: 'Fabrication Team B', 
+                stations: ['RodCut', 'UnistrutCut', 'Assembly'],
+                members: [
+                  { id: 'fab-b-1', name: 'Jessica Martinez', role: 'Lead' },
+                  { id: 'fab-b-2', name: 'Tony Wilson', role: 'Assembler' },
+                  { id: 'fab-b-3', name: 'Amanda Foster', role: 'Cutter' }
+                ],
+                dailyHours: 24
+              },
+              {
+                id: 'team-qa',
+                name: 'Quality Assurance Team',
+                stations: ['ShopQA'],
+                members: [
+                  { id: 'qa-1', name: 'Robert Thompson', role: 'QA Lead' },
+                  { id: 'qa-2', name: 'Lisa Park', role: 'Inspector' }
+                ],
+                dailyHours: 16
+              }
+            ],
+            // Add comprehensive mock data
+            assignments: [
+              // Fabrication assignments
+              {
+                id: 'ASG-001',
+                projectId: 'PRJ-007',
+                packageId: 'PKG-602',
+                hangerId: 'HNG-7004',
+                teamId: 'team-fab-a',
+                priority: 'High',
+                state: 'InProgress',
+                steps: [
+                  { key: 'RodCut', label: 'Rod Cutting', complete: true, startedAt: now, completedAt: now },
+                  { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: true, startedAt: now, completedAt: now },
+                  { key: 'Assembly', label: 'Assembly', complete: false, startedAt: now },
+                  { key: 'QA', label: 'Quality Check', complete: false }
+                ],
+                expedite: true,
+                createdAt: now,
+                startedAt: now,
+                toolEvents: []
+              },
+              {
+                id: 'ASG-002', 
+                projectId: 'PRJ-001',
+                packageId: 'PKG-018',
+                hangerId: 'HNG-1055',
+                teamId: 'team-fab-b',
+                priority: 'Med',
+                state: 'InProgress',
+                steps: [
+                  { key: 'RodCut', label: 'Rod Cutting', complete: true, startedAt: now, completedAt: now },
+                  { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: false, startedAt: now },
+                  { key: 'Assembly', label: 'Assembly', complete: false },
+                  { key: 'QA', label: 'Quality Check', complete: false }
+                ],
+                createdAt: now,
+                startedAt: now,
+                toolEvents: []
+              },
+              // QA assignments
+              {
+                id: 'ASG-003',
+                projectId: 'PRJ-007',
+                packageId: 'PKG-601', 
+                hangerId: 'HNG-7000',
+                teamId: 'team-qa',
+                priority: 'High',
+                state: 'QA',
+                steps: [
+                  { key: 'RodCut', label: 'Rod Cutting', complete: true },
+                  { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: true },
+                  { key: 'Assembly', label: 'Assembly', complete: true },
+                  { key: 'QA', label: 'Quality Check', complete: false, startedAt: now }
+                ],
+                createdAt: now,
+                toolEvents: []
+              }
+            ],
+            exceptions: [
+              {
+                id: 'EXC-001',
+                type: 'InventoryShort',
+                ref: 'PKG-018',
+                description: 'Short 2x P1000 Unistrut Channel for L2 Imaging package',
+                severity: 'High',
+                assignedTo: 'inventory-coord-1',
+                state: 'Open',
+                createdAt: now
+              },
+              {
+                id: 'EXC-002',
+                type: 'QAFail',
+                ref: 'HNG-7001',
+                description: 'Weld quality issue detected on OR Suite A hanger',
+                severity: 'Critical',
+                assignedTo: 'qa-1',
+                state: 'InProgress',
+                createdAt: now
+              },
+              {
+                id: 'EXC-003',
+                type: 'EquipmentDown', 
+                ref: 'team-fab-a',
+                description: 'Hydraulic saw needs maintenance - Team A station 2',
+                severity: 'Med',
+                assignedTo: 'maintenance-lead',
+                state: 'Open',
+                createdAt: now
+              }
+            ],
+            workOrders: [
+              {
+                id: 'WO-001',
+                projectId: 'PRJ-007',
+                packageId: 'PKG-602',
+                team: 'team-fab-a',
+                station: 'Assembly',
+                priority: 'High',
+                state: 'InProgress',
+                notes: 'Expedited for OR Suite B - critical path',
+                createdAt: now,
+                updatedAt: now
+              },
+              {
+                id: 'WO-002',
+                projectId: 'PRJ-001', 
+                packageId: 'PKG-018',
+                team: 'team-fab-b',
+                station: 'UnistrutCut',
+                priority: 'Med',
+                state: 'InProgress',
+                notes: 'Imaging department package - standard timeline',
+                createdAt: now,
+                updatedAt: now
+              }
+            ],
+            pickLists: [
+              {
+                id: 'PL-001',
+                packageId: 'PKG-021',
+                items: [
+                  { sku: 'P1000', desc: 'Unistrut Channel P1000', qty: 8, pickedQty: 8, location: 'A-14-B' },
+                  { sku: 'ROD-3/8', desc: 'Threaded Rod 3/8', qty: 12, pickedQty: 10, location: 'B-22-C' },
+                  { sku: 'NUT-STRUT', desc: 'Strut Nut', qty: 24, pickedQty: 24, location: 'C-05-A' }
+                ],
+                assignedTo: 'picker-1',
+                state: 'InProgress',
+                createdAt: now
+              }
+            ]
+          });
+        }
       },
 
       // Simple step template by hanger type

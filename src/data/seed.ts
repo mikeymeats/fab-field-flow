@@ -170,12 +170,24 @@ export const seed: { projects: SeedProject[]; packages: SeedPackage[]; hangers: 
     { id:"PKG-503", projectId:"PRJ-006", name:"PKG DC-SERVER", level:"L1", zone:"SERVER", state:"Assembled", hangerIds:["HNG-6007","HNG-6008","HNG-6009","HNG-6010"] },
     { id:"PKG-504", projectId:"PRJ-006", name:"PKG DC-ROOF", level:"ROOF", zone:"ROOF", state:"ReadyToShip", hangerIds:["HNG-6011","HNG-6012"] },
     
-    // PRJ-007 packages (Hospital Expansion - Active)
-    { id:"PKG-601", projectId:"PRJ-007", name:"PKG OR-SUITE-A", level:"L3", zone:"OR-A", state:"ShopQA", hangerIds:["HNG-7000","HNG-7001","HNG-7002","HNG-7003"] },
-    { id:"PKG-602", projectId:"PRJ-007", name:"PKG OR-SUITE-B", level:"L3", zone:"OR-B", state:"InFabrication", hangerIds:["HNG-7004","HNG-7005","HNG-7006"] },
-    { id:"PKG-603", projectId:"PRJ-007", name:"PKG ICU-LEVEL-4", level:"L4", zone:"ICU", state:"Planned", hangerIds:["HNG-7007","HNG-7008","HNG-7009","HNG-7010"] },
-    { id:"PKG-604", projectId:"PRJ-007", name:"PKG EMERGENCY", level:"L1", zone:"ER", state:"ApprovedForFab", hangerIds:["HNG-7011","HNG-7012","HNG-7013"] },
-    { id:"PKG-605", projectId:"PRJ-007", name:"PKG MECHANICAL", level:"B1", zone:"MECH", state:"Planned", hangerIds:["HNG-7014","HNG-7015","HNG-7016","HNG-7017"] }
+    // PRJ-007 packages (Hospital Expansion - Active) - Complete workflow demonstration
+    { id:"PKG-601", projectId:"PRJ-007", name:"PKG OR-SUITE-A", level:"L3", zone:"OR-A", state:"QA", hangerIds:["HNG-7000","HNG-7001","HNG-7002","HNG-7003"] },
+    { id:"PKG-602", projectId:"PRJ-007", name:"PKG OR-SUITE-B", level:"L3", zone:"OR-B", state:"Fabrication", hangerIds:["HNG-7004","HNG-7005","HNG-7006"] },
+    { id:"PKG-603", projectId:"PRJ-007", name:"PKG ICU-LEVEL-4", level:"L4", zone:"ICU", state:"Packaging", hangerIds:["HNG-7007","HNG-7008","HNG-7009","HNG-7010"] },
+    { id:"PKG-604", projectId:"PRJ-007", name:"PKG EMERGENCY", level:"L1", zone:"ER", state:"Shipping", hangerIds:["HNG-7011","HNG-7012","HNG-7013"] },
+    { id:"PKG-605", projectId:"PRJ-007", name:"PKG MECHANICAL", level:"B1", zone:"MECH", state:"Shipped", hangerIds:["HNG-7014","HNG-7015","HNG-7016","HNG-7017"] },
+    
+    // Additional PRJ-001 packages for full workflow demonstration
+    { id:"PKG-017", projectId:"PRJ-001", name:"PKG L1-CAFETERIA", level:"L1", zone:"CAF", state:"Approved", hangerIds:["HNG-1052","HNG-1053","HNG-1054"] },
+    { id:"PKG-018", projectId:"PRJ-001", name:"PKG L2-IMAGING", level:"L2", zone:"IMG", state:"Fabrication", hangerIds:["HNG-1055","HNG-1056","HNG-1057"] },
+    { id:"PKG-019", projectId:"PRJ-001", name:"PKG L3-RADIOLOGY", level:"L3", zone:"RAD", state:"InProduction", hangerIds:["HNG-1058","HNG-1059","HNG-1060"] },
+    { id:"PKG-020", projectId:"PRJ-001", name:"PKG L4-PATIENT-WEST", level:"L4", zone:"WEST", state:"Inspection", hangerIds:["HNG-1061","HNG-1062","HNG-1063"] },
+    { id:"PKG-021", projectId:"PRJ-001", name:"PKG L5-CONFERENCE", level:"L5", zone:"CONF", state:"Kitting", hangerIds:["HNG-1064","HNG-1065","HNG-1066"] },
+    
+    // PRJ-006 additional packages for more workflow states  
+    { id:"PKG-506", projectId:"PRJ-006", name:"PKG DC-SECURITY", level:"L1", zone:"SEC", state:"QA", hangerIds:["HNG-6013","HNG-6014"] },
+    { id:"PKG-507", projectId:"PRJ-006", name:"PKG DC-BACKUP", level:"L1", zone:"BACKUP", state:"Packaging", hangerIds:["HNG-6015","HNG-6016","HNG-6017"] },
+    { id:"PKG-508", projectId:"PRJ-006", name:"PKG DC-NETWORK", level:"L1", zone:"NET", state:"Shipping", hangerIds:["HNG-6018","HNG-6019"] }
   ],
   hangers: [
     // ---------- PKG-001 (L2-ZA) ----------
@@ -629,9 +641,11 @@ export const seed: { projects: SeedProject[]; packages: SeedPackage[]; hangers: 
         {sku:"CLV-STD",desc:"Clevis Hanger",uom:"ea",qty:1}
       ]
     }
-
-    // Note: Additional hangers for other projects would continue here...
-    // Due to size constraints, I'm including a representative sample
-    // The system will generate placeholder hangers for remaining packages
   ]
 };
+
+// Import additional workflow hangers and merge them  
+import { workflowHangers } from './additional-hangers';
+
+// Append workflow hangers to the main seed data
+seed.hangers.push(...workflowHangers);
