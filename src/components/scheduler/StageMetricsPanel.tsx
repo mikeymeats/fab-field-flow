@@ -127,60 +127,49 @@ export function StageMetricsPanel({ packages }: StageMetricsPanelProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
       {metricCards.map((card) => (
-        <div
-          key={card.title}
-          className={`
-            border rounded-lg p-4 transition-all
-            ${getColorClasses(card.color, card.bottleneck)}
-          `}
-        >
+          <div
+            key={card.title}
+            className={`
+              border rounded-lg p-3 transition-all
+              ${getColorClasses(card.color, card.bottleneck)}
+            `}
+          >
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <card.icon className="w-5 h-5" />
-              <h3 className="font-medium text-sm">{card.title}</h3>
+              <card.icon className="w-4 h-4" />
+              <h3 className="font-medium text-xs">{card.title}</h3>
             </div>
             {card.bottleneck && (
               <div title="Bottleneck detected">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <AlertTriangle className="w-3 h-3 text-destructive" />
               </div>
             )}
           </div>
 
-          {/* Metrics */}
-          <div className="space-y-2">
+          {/* Metrics - Compact */}
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-xs opacity-75">Active</span>
               <span className="text-lg font-bold">{card.count}</span>
             </div>
             
-            <div className="flex items-center justify-between">
-              <span className="text-xs opacity-75 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Avg Time
-              </span>
-              <span className="text-sm font-medium">
-                {card.avgTime.toFixed(1)}h
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-xs opacity-75 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                Throughput
-              </span>
-              <span className="text-sm font-medium">
-                {card.throughput}/day
-              </span>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="text-center">
+                <div className="opacity-75">⏱ {card.avgTime.toFixed(1)}h</div>
+              </div>
+              <div className="text-center">
+                <div className="opacity-75">📈 {card.throughput}/day</div>
+              </div>
             </div>
           </div>
 
           {/* Status Indicator */}
-          <div className="mt-3 pt-2 border-t border-current/20">
-            <div className="text-xs font-medium">
-              {card.bottleneck ? 'Bottleneck Alert' : 'Normal Flow'}
+          <div className="mt-2 pt-1 border-t border-current/20">
+            <div className="text-xs">
+              {card.bottleneck ? '⚠ Bottleneck' : '✓ Normal'}
             </div>
           </div>
         </div>

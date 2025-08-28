@@ -34,6 +34,8 @@ export default function Scheduler() {
     showCriticalPath: false,
     showExpedited: false,
   });
+  const [cardSize, setCardSize] = useState<'compact' | 'normal' | 'detailed'>('normal');
+  const [showMetrics, setShowMetrics] = useState(true);
 
   // Ensure teams exist
   ensureTeamSeeds();
@@ -216,17 +218,17 @@ export default function Scheduler() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="p-4 border-b bg-muted/30">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex-1 max-w-md">
+        {/* Filters & Controls */}
+        <div className="p-3 border-b bg-muted/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 max-w-sm">
                 <input
                   type="text"
                   placeholder="Search packages..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-background border rounded-md text-sm"
                 />
               </div>
               
@@ -236,75 +238,106 @@ export default function Scheduler() {
                 packages={packages}
               />
 
-              <button
-                onClick={() => setFilters({ ...filters, showBottlenecksOnly: !filters.showBottlenecksOnly })}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${filters.showBottlenecksOnly 
-                    ? 'bg-destructive text-destructive-foreground' 
-                    : 'bg-background border hover:bg-muted'
-                  }
-                `}
-              >
-                <TrendingUp className="w-4 h-4" />
-                Bottlenecks
-              </button>
-
-              <button
-                onClick={() => setFilters({ ...filters, showCriticalPath: !filters.showCriticalPath })}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${filters.showCriticalPath 
-                    ? 'bg-orange-500 text-white' 
-                    : 'bg-background border hover:bg-muted'
-                  }
-                `}
-              >
-                <AlertTriangle className="w-4 h-4" />
-                Critical Path
-              </button>
-            </div>
-
-            {/* Bulk Actions */}
-            {selectedPackages.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedPackages.length} selected
-                </span>
                 <button
-                  onClick={() => handleExpedite(selectedPackages)}
-                  className="flex items-center gap-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
+                  onClick={() => setFilters({ ...filters, showBottlenecksOnly: !filters.showBottlenecksOnly })}
+                  className={`
+                    flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors
+                    ${filters.showBottlenecksOnly 
+                      ? 'bg-destructive text-destructive-foreground' 
+                      : 'bg-background border hover:bg-muted'
+                    }
+                  `}
                 >
-                  <Zap className="w-4 h-4" />
-                  Expedite
+                  <TrendingUp className="w-3 h-3" />
+                  Bottlenecks
                 </button>
+
                 <button
-                  onClick={() => handleBulkMove(selectedPackages, 'fabrication')}
-                  className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                  onClick={() => setFilters({ ...filters, showCriticalPath: !filters.showCriticalPath })}
+                  className={`
+                    flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors
+                    ${filters.showCriticalPath 
+                      ? 'bg-orange-500 text-white' 
+                      : 'bg-background border hover:bg-muted'
+                    }
+                  `}
                 >
-                  <CheckSquare className="w-4 h-4" />
-                  To Fab
-                </button>
-                <button
-                  onClick={() => setSelectedPackages([])}
-                  className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  Clear
+                  <AlertTriangle className="w-3 h-3" />
+                  Critical
                 </button>
               </div>
-            )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* View Controls */}
+              <div className="flex items-center gap-1 bg-background border rounded-md p-1">
+                <button
+                  onClick={() => setCardSize('compact')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${cardSize === 'compact' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  title="Compact view"
+                >
+                  ▢
+                </button>
+                <button
+                  onClick={() => setCardSize('normal')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${cardSize === 'normal' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  title="Normal view"
+                >
+                  ▣
+                </button>
+                <button
+                  onClick={() => setCardSize('detailed')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${cardSize === 'detailed' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  title="Detailed view"
+                >
+                  ■
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowMetrics(!showMetrics)}
+                className={`px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${showMetrics ? 'bg-primary text-primary-foreground' : 'bg-background border hover:bg-muted'}`}
+                title="Toggle metrics"
+              >
+                📊
+              </button>
+
+              {/* Bulk Actions */}
+              {selectedPackages.length > 0 && (
+                <div className="flex items-center gap-2 pl-2 border-l">
+                  <span className="text-xs text-muted-foreground">
+                    {selectedPackages.length} selected
+                  </span>
+                  <button
+                    onClick={() => handleExpedite(selectedPackages)}
+                    className="flex items-center gap-1 px-2 py-1.5 bg-orange-500 text-white rounded-md text-xs font-medium hover:bg-orange-600 transition-colors"
+                  >
+                    <Zap className="w-3 h-3" />
+                    Expedite
+                  </button>
+                  <button
+                    onClick={() => setSelectedPackages([])}
+                    className="p-1.5 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors"
+                    title="Clear selection"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4">
           {viewMode === 'pipeline' ? (
             <>
-              {/* Stage Metrics */}
-              <StageMetricsPanel packages={filteredPackages} />
+              {/* Stage Metrics - Conditional */}
+              {showMetrics && <StageMetricsPanel packages={filteredPackages} />}
 
               {/* Pipeline Stages - Enhanced 5-Stage Pipeline */}
-              <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
                 <PipelineStage
                   stage="approved"
                   title="Ready to Start"
@@ -314,6 +347,7 @@ export default function Scheduler() {
                   selectedPackages={selectedPackages}
                   onToggleSelection={togglePackageSelection}
                   showCriticalPath={filters.showCriticalPath}
+                  cardSize={cardSize}
                 />
                 <PipelineStage
                   stage="fabrication"
@@ -324,6 +358,7 @@ export default function Scheduler() {
                   selectedPackages={selectedPackages}
                   onToggleSelection={togglePackageSelection}
                   showCriticalPath={filters.showCriticalPath}
+                  cardSize={cardSize}
                 />
                 <PipelineStage
                   stage="qa"
@@ -334,6 +369,7 @@ export default function Scheduler() {
                   selectedPackages={selectedPackages}
                   onToggleSelection={togglePackageSelection}
                   showCriticalPath={filters.showCriticalPath}
+                  cardSize={cardSize}
                 />
                 <PipelineStage
                   stage="packaging"
@@ -344,6 +380,7 @@ export default function Scheduler() {
                   selectedPackages={selectedPackages}
                   onToggleSelection={togglePackageSelection}
                   showCriticalPath={filters.showCriticalPath}
+                  cardSize={cardSize}
                 />
                 <PipelineStage
                   stage="shipping"
@@ -354,6 +391,7 @@ export default function Scheduler() {
                   selectedPackages={selectedPackages}
                   onToggleSelection={togglePackageSelection}
                   showCriticalPath={filters.showCriticalPath}
+                  cardSize={cardSize}
                 />
               </div>
             </>

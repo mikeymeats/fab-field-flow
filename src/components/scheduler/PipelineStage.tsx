@@ -17,6 +17,7 @@ interface PipelineStageProps {
   selectedPackages: string[];
   onToggleSelection: (packageId: string) => void;
   showCriticalPath: boolean;
+  cardSize: 'compact' | 'normal' | 'detailed';
 }
 
 export function PipelineStage({ 
@@ -27,7 +28,8 @@ export function PipelineStage({
   onMovePackage, 
   selectedPackages, 
   onToggleSelection, 
-  showCriticalPath 
+  showCriticalPath,
+  cardSize
 }: PipelineStageProps) {
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: 'package',
@@ -65,55 +67,48 @@ export function PipelineStage({
     <div
       ref={drop}
       className={`
-        min-w-80 border-2 border-dashed rounded-lg p-4 transition-colors
-        ${isOver && canDrop ? stageColors[stage] : 'border-border bg-card/50'}
-        ${metrics.bottleneck ? 'ring-2 ring-destructive/50' : ''}
+        min-w-0 flex-1 border-2 border-dashed rounded-lg p-3 transition-all
+        ${isOver && canDrop ? stageColors[stage] : 'border-border bg-card/30'}
+        ${metrics.bottleneck ? 'ring-1 ring-destructive/50' : ''}
       `}
     >
-      {/* Stage Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{getStageIcon()}</span>
+      {/* Stage Header - Compact */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{getStageIcon()}</span>
           <div>
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            <p className="text-sm text-muted-foreground">{packages.length} packages</p>
+            <h3 className="font-medium text-sm text-foreground">{title}</h3>
+            <p className="text-xs text-muted-foreground">{packages.length} items</p>
           </div>
         </div>
         {metrics.bottleneck && (
           <div title="Bottleneck detected">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
+            <AlertTriangle className="w-4 h-4 text-destructive" />
           </div>
         )}
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-muted/50 rounded-lg">
+      {/* Compact Metrics Row */}
+      <div className="grid grid-cols-2 gap-2 mb-3 p-2 bg-muted/30 rounded text-xs">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            Avg Time
-          </div>
-          <div className="text-sm font-medium text-foreground">
-            {metrics.avgTimeInStage.toFixed(1)}h
-          </div>
+          <div className="text-muted-foreground">⏱ {metrics.avgTimeInStage.toFixed(1)}h</div>
         </div>
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <TrendingUp className="w-3 h-3" />
-            Throughput
-          </div>
-          <div className="text-sm font-medium text-foreground">
-            {metrics.throughput}/day
-          </div>
+          <div className="text-muted-foreground">📈 {metrics.throughput}/day</div>
         </div>
       </div>
 
-      {/* Packages List */}
-      <div className="space-y-3 max-h-96 overflow-y-auto">
+      {/* Packages List - Scrollable */}
+      <div 
+        className={`
+          space-y-2 overflow-y-auto
+          ${cardSize === 'compact' ? 'max-h-60' : cardSize === 'normal' ? 'max-h-80' : 'max-h-96'}
+        `}
+      >
         {packages.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <div className="text-3xl mb-2">{getStageIcon()}</div>
-            <p className="text-sm">No packages in {title.toLowerCase()}</p>
+          <div className="text-center py-6 text-muted-foreground">
+            <div className="text-2xl mb-1">{getStageIcon()}</div>
+            <p className="text-xs">Empty</p>
           </div>
         ) : (
           packages.map((pkg) => {
@@ -128,6 +123,7 @@ export function PipelineStage({
                 isSelected={isSelected}
                 onToggleSelection={onToggleSelection}
                 isCriticalPath={isCriticalPath}
+                cardSize={cardSize}
               />
             );
           })
