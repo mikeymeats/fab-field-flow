@@ -179,7 +179,7 @@ export type Team = {
 };
 
 export type AssignmentStep = {
-  key: 'RodCut' | 'UnistrutCut' | 'Assembly' | 'QA';
+  key: 'RodCut' | 'UnistrutCut' | 'Assembly' | 'ShopQA';
   label: string;
   requiredTools?: string[];   // tool IDs/types (stub)
   inputs?: { key: string; label: string; type: 'number' | 'text'; unit?: string; required?: boolean }[];
@@ -688,7 +688,7 @@ export const useDB = create<DB>()(
                   { key: 'RodCut', label: 'Rod Cutting', complete: true, startedAt: now, completedAt: now },
                   { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: true, startedAt: now, completedAt: now },
                   { key: 'Assembly', label: 'Assembly', complete: false, startedAt: now },
-                  { key: 'QA', label: 'Quality Check', complete: false }
+                  { key: 'ShopQA', label: 'Quality Check', complete: false }
                 ],
                 expedite: true,
                 createdAt: now,
@@ -707,7 +707,7 @@ export const useDB = create<DB>()(
                   { key: 'RodCut', label: 'Rod Cutting', complete: true, startedAt: now, completedAt: now },
                   { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: false, startedAt: now },
                   { key: 'Assembly', label: 'Assembly', complete: false },
-                  { key: 'QA', label: 'Quality Check', complete: false }
+                  { key: 'ShopQA', label: 'Quality Check', complete: false }
                 ],
                 createdAt: now,
                 startedAt: now,
@@ -726,7 +726,7 @@ export const useDB = create<DB>()(
                   { key: 'RodCut', label: 'Rod Cutting', complete: true },
                   { key: 'UnistrutCut', label: 'Unistrut Cutting', complete: true },
                   { key: 'Assembly', label: 'Assembly', complete: true },
-                  { key: 'QA', label: 'Quality Check', complete: false, startedAt: now }
+                  { key: 'ShopQA', label: 'Quality Check', complete: false, startedAt: now }
                 ],
                 createdAt: now,
                 toolEvents: []
@@ -819,7 +819,7 @@ export const useDB = create<DB>()(
             { key: 'RodCut', label: 'Cut threaded rods to length', requiredTools: ['TorqueWrench?', 'RodCutter'], inputs: [{ key: 'rodCount', label: '# rods cut', type: 'number', required: true }] },
             { key: 'UnistrutCut', label: 'Cut Unistrut to length', requiredTools: ['UnistrutCutter'], inputs: [{ key: 'strutLength', label: 'Total strut length (ft)', type: 'number', required: true }] },
             { key: 'Assembly', label: 'Assemble hanger hardware', requiredTools: ['ImpactDriver'], inputs: [{ key: 'notes', label: 'Assembly notes', type: 'text' }] },
-            { key: 'QA', label: 'Shop QA & torque check', requiredTools: ['TorqueWrench'], inputs: [{ key: 'torque', label: 'Torque (ft·lb)', type: 'number', required: true }] }
+            { key: 'ShopQA', label: 'Shop QA & torque check', requiredTools: ['TorqueWrench'], inputs: [{ key: 'torque', label: 'Torque (ft·lb)', type: 'number', required: true }] }
           ] as AssignmentStep[];
           if (type === 'Clevis') return [base[0], base[2], base[3]];
           if (type === 'Seismic') return [base[0], base[1], base[2], base[3]];

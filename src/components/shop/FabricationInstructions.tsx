@@ -123,7 +123,7 @@ export function FabricationInstructions({
       ]
     },
     {
-      key: 'QA',
+      key: 'ShopQA',
       title: 'Quality Inspection',
       description: 'Final inspection and documentation',
       estimatedTime: 5,
