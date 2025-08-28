@@ -14,9 +14,21 @@ interface PipelineStageProps {
     throughput: number;
   };
   onMovePackage: (packageId: string, toStage: string) => void;
+  selectedPackages: string[];
+  onToggleSelection: (packageId: string) => void;
+  showCriticalPath: boolean;
 }
 
-export function PipelineStage({ stage, title, packages, metrics, onMovePackage }: PipelineStageProps) {
+export function PipelineStage({ 
+  stage, 
+  title, 
+  packages, 
+  metrics, 
+  onMovePackage, 
+  selectedPackages, 
+  onToggleSelection, 
+  showCriticalPath 
+}: PipelineStageProps) {
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: 'package',
     drop: (item: { id: string; stage: string }) => {
@@ -102,13 +114,21 @@ export function PipelineStage({ stage, title, packages, metrics, onMovePackage }
             <p className="text-sm">No packages in {title.toLowerCase()}</p>
           </div>
         ) : (
-          packages.map((pkg) => (
-            <PackagePipelineCard
-              key={pkg.id}
-              package={pkg}
-              stage={stage}
-            />
-          ))
+          packages.map((pkg) => {
+            const isSelected = selectedPackages.includes(pkg.id);
+            const isCriticalPath = showCriticalPath && Math.random() < 0.3; // Mock critical path logic
+            
+            return (
+              <PackagePipelineCard
+                key={pkg.id}
+                package={pkg}
+                stage={stage}
+                isSelected={isSelected}
+                onToggleSelection={onToggleSelection}
+                isCriticalPath={isCriticalPath}
+              />
+            );
+          })
         )}
       </div>
     </div>

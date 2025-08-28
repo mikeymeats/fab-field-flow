@@ -1,13 +1,22 @@
 import { useDrag } from 'react-dnd';
-import { Clock, AlertCircle, Zap, User, Calendar } from 'lucide-react';
-import type { Package } from '@/store/db';
+import { Clock, AlertTriangle, Package } from 'lucide-react';
+import type { Package as PackageType } from '@/store/db';
 
 interface PackagePipelineCardProps {
-  package: Package;
+  package: PackageType;
   stage: string;
+  isSelected?: boolean;
+  onToggleSelection?: (packageId: string) => void;
+  isCriticalPath?: boolean;
 }
 
-export function PackagePipelineCard({ package: pkg, stage }: PackagePipelineCardProps) {
+export function PackagePipelineCard({ 
+  package: pkg, 
+  stage, 
+  isSelected = false, 
+  onToggleSelection,
+  isCriticalPath = false 
+}: PackagePipelineCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'package',
     item: { id: pkg.id, stage },
@@ -41,58 +50,80 @@ export function PackagePipelineCard({ package: pkg, stage }: PackagePipelineCard
     return Math.random() < 0.1;
   };
 
+  const simulatedPriority = Math.random() < 0.2 ? 'High' : Math.random() < 0.5 ? 'Med' : 'Low';
+
   return (
     <div
       ref={drag}
       className={`
-        border rounded-lg p-3 cursor-move transition-all hover:shadow-md
-        ${isDragging ? 'opacity-50' : ''}
-        ${Math.random() < 0.2 ? priorityColors.High : 'border-border bg-card'}
+        bg-card border rounded-lg p-3 cursor-move transition-all relative
+        ${isDragging ? 'opacity-50 transform rotate-2' : 'hover:shadow-md'}
+        ${priorityColors[simulatedPriority] || 'border-border'}
         ${isOverdue() ? 'ring-2 ring-destructive/50' : ''}
-        ${Math.random() < 0.1 ? 'ring-2 ring-primary/50' : ''}
+        ${isSelected ? 'ring-2 ring-primary/50 bg-primary/5' : ''}
+        ${isCriticalPath ? 'ring-2 ring-orange-500/50 bg-orange-50' : ''}
       `}
+      onClick={(e) => {
+        if (onToggleSelection) {
+          e.stopPropagation();
+          onToggleSelection(pkg.id);
+        }
+      }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-foreground">{pkg.id}</span>
-          {Math.random() < 0.1 && <Zap className="w-3 h-3 text-primary" />}
-          {isOverdue() && <AlertCircle className="w-3 h-3 text-destructive" />}
-        </div>
-        <span className={`text-xs px-2 py-1 rounded ${statusColors[pkg.state as keyof typeof statusColors] || statusColors.Draft}`}>
-          {pkg.state}
-        </span>
-      </div>
-
-      {/* Package Info */}
-      <div className="mb-3">
-        <div className="text-sm font-medium text-foreground mb-1">{pkg.name}</div>
-        <div className="text-xs text-muted-foreground">
-          {pkg.level && `Level: ${pkg.level}`}
-          {pkg.zone && ` • Zone: ${pkg.zone}`}
-        </div>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span>{getTimeInStage()}h in stage</span>
-        </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <User className="w-3 h-3" />
-          <span>{pkg.hangerIds.length} hangers</span>
-        </div>
-      </div>
-
-      {/* Priority Badge */}
-      {Math.random() < 0.3 && (
-        <div className="mt-2">
-          <span className="text-xs px-2 py-1 rounded border font-medium">
-            High Priority
-          </span>
+      {/* Selection Checkbox */}
+      {onToggleSelection && (
+        <div className="absolute top-2 right-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelection(pkg.id)}
+            className="w-4 h-4 rounded border-border"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
+
+      {/* Critical Path Indicator */}
+      {isCriticalPath && (
+        <div className="absolute top-2 left-2">
+          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+        </div>
+      )}
+
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div className="font-medium text-sm text-foreground">{pkg.id}</div>
+          <div className="text-xs text-muted-foreground">
+            Status: {pkg.state}
+          </div>
+        </div>
+        {simulatedPriority === 'High' && (
+          <div className="flex items-center gap-1 text-destructive">
+            <AlertTriangle className="w-3 h-3" />
+            <span className="text-xs font-medium">HIGH</span>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-sm text-foreground">
+          <div className="font-medium">{pkg.name}</div>
+          <div className="text-muted-foreground">
+            {pkg.level} • {pkg.zone}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>{getTimeInStage()}h in stage</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Package className="w-3 h-3" />
+            <span>{pkg.hangerIds.length} hangers</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
